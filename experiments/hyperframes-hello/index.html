@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperFrames Hello — VibeFrames Experiment</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 2rem;
+      padding: 2rem;
+    }
+    h1 { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.05em; }
+    p { font-size: 0.875rem; color: #888; max-width: 600px; text-align: center; }
+    .player-container {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 16 / 9;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    hyperframes-player {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>HyperFrames Hello World</h1>
+  <p>
+    A minimal HyperFrames composition rendered via the
+    <code>&lt;hyperframes-player&gt;</code> web component (CDN).
+    This validates that the player can embed and play a composition
+    defined as plain HTML with data attributes.
+  </p>
+
+  <div class="player-container">
+    <hyperframes-player
+      src="./composition.html"
+      controls
+      autoplay
+      muted
+      loop
+    ></hyperframes-player>
+  </div>
+
+  <p>
+    <strong>Experiment goal:</strong> verify HyperFrames' HTML-native model —
+    data attributes for timing, GSAP for animation, player for preview.
+  </p>
+
+  <script type="module"
+    src="https://cdn.jsdelivr.net/npm/@hyperframes/player"></script>
+</body>
+</html>
