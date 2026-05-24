@@ -11,7 +11,7 @@ The project's spine. Each doc tackles one problem thoughtfully. Read in order if
 | 02 | [mastra-primer](./02-mastra-primer.md) | ✅ drafted | AI SDK → LLM → Agent → Tools → Workflows |
 | 03 | [harness-why-what-how](./03-harness-why-what-how.md) | ✅ drafted | What is the Mastra `Harness` class, why does it exist |
 | 04 | [our-harness-vhld](./04-our-harness-vhld.md) | ✅ drafted | Harness anatomy mapped to VibeFrames |
-| 05 | [hld-tools-flows](./05-hld-tools-flows.md) | ⏳ todo | Chat (SSE rationale), composition, render, UI bridging |
+| 05 | [hld-tools-flows](./05-hld-tools-flows.md) | ✅ drafted | Chat (SSE rationale), composition, render, UI bridging |
 | 06 | [tech-stack](./06-tech-stack.md) | ⏳ todo | Next.js, Mastra, OpenAI, Neon, Prisma, Clerk, Vercel |
 | 07 | [ui-system](./07-ui-system.md) | ⏳ todo | Branding, palette, type, components, wireframes |
 | 99 | [deployment-considerations](./99-deployment-considerations.md) | ⏳ todo | Prod gotchas (Vercel timeouts, SSE, cold starts, cost) |
@@ -33,8 +33,8 @@ docs-only ┐
           │  M1  HyperFrames exploration
           │  M2  Mastra primer
           │  M3  Harness — why / what / how
-          │  M4  Our Harness — VHLD ←── you are here
-          │  M5  HLD — tools, SSE, render, composition
+          │  M4  Our Harness — VHLD
+          │  M5  HLD — tools, SSE, render, composition ←── you are here
           │  M6  Tech stack base
           └  M7  UI system
 
