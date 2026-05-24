@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# data (local mastra storage etc.)
+.data/
+*.db
+*.db-journal
+*.sqlite
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# build artifacts from experiments
+experiments/**/node_modules/
+experiments/**/dist/
+experiments/**/.next/
