@@ -1,6 +1,125 @@
 # Our Harness — Very High-Level Design
 
-> **TL;DR** — VibeFrames wraps a single `Harness<VibeState>` per project. One mode (`vibe`), one agent (`Composer`), one model (`o4-mini`), four skill domains, three tool categories, thread-scoped message history (LibSQL), and a 7-event SSE contract. This doc is the *shape* — the anatomy diagram with five bullets per box. Detailed schemas, tool signatures, and SSE protocol come in M5.
+> **TL;DR** — VibeFrames wraps a single `Harness<VibeState>` per project. Two modes (`plan` for thinking/proposing, `vibe` for executing), two agents (Planner + Composer), one model (`o4-mini` at different reasoning efforts), four skill domains, three tool categories, thread-scoped message history (LibSQL), and a 9-event SSE contract. This doc is the *shape* — the anatomy diagram with five bullets per box. Detailed schemas, tool signatures, and SSE protocol come in M5.
+
+---
+
+## 0. How Mastra constructs connect
+
+Before diving into VibeFrames' specific shape, here's how Mastra's building blocks stack together — from the LLM at the bottom to the Harness at the top:
+
+```
+  HOW MASTRA CONSTRUCTS CONNECT
+  ═════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                                                                     │
+  │                         ╔═══════════════╗                           │
+  │                         ║   HARNESS     ║  ← long-lived container   │
+  │                         ║               ║    per project            │
+  │                         ╚═══════╤═══════╝                           │
+  │                                 │                                   │
+  │                   ┌─────────────┼─────────────┐                     │
+  │                   │             │             │                     │
+  │                   ▼             ▼             ▼                     │
+  │            ╔════════════╗ ╔══════════╗ ╔════════════╗               │
+  │            ║   MODES    ║ ║  STATE   ║ ║  MEMORY    ║               │
+  │            ║            ║ ║  (Zod)   ║ ║  + STORAGE ║               │
+  │            ╚═════╤══════╝ ╚══════════╝ ╚════════════╝               │
+  │                  │                                                  │
+  │         ┌────────┴────────┐                                         │
+  │         │                 │                                         │
+  │         ▼                 ▼                                         │
+  │  ╔════════════╗    ╔════════════╗                                   │
+  │  ║ MODE:plan  ║    ║ MODE:vibe  ║   ← swap agent behavior          │
+  │  ║            ║    ║            ║     without rebuilding             │
+  │  ╚═════╤══════╝    ╚═════╤══════╝                                   │
+  │        │                 │                                          │
+  │        ▼                 ▼                                          │
+  │  ╔════════════╗    ╔════════════╗                                   │
+  │  ║   AGENT    ║    ║   AGENT    ║   ← wraps model + instructions    │
+  │  ║  Planner   ║    ║  Composer  ║     + tools                       │
+  │  ╚═════╤══════╝    ╚═════╤══════╝                                   │
+  │        │                 │                                          │
+  │        │     ┌───────────┤                                          │
+  │        │     │           │                                          │
+  │        ▼     ▼           ▼                                          │
+  │  ╔══════════╗     ╔════════════╗                                    │
+  │  ║  TOOLS   ║     ║   SKILLS   ║   ← tools = actions               │
+  │  ║ (Zod in/ ║     ║  (loaded   ║     skills = knowledge             │
+  │  ║  out)    ║     ║   on       ║                                    │
+  │  ╚════╤═════╝     ║   demand)  ║                                    │
+  │       │           ╚════════════╝                                    │
+  │       ▼                                                             │
+  │  ╔══════════════════════╗                                           │
+  │  ║    AI SDK CORE       ║   ← unified LLM interface                 │
+  │  ║  generateText()      ║     (provider-agnostic)                   │
+  │  ║  streamText()        ║                                           │
+  │  ╚══════════╤═══════════╝                                           │
+  │             │                                                       │
+  │             ▼                                                       │
+  │  ╔══════════════════════╗                                           │
+  │  ║    LLM PROVIDER      ║   ← OpenAI o4-mini                       │
+  │  ║  @ai-sdk/openai      ║     (swappable to any provider)           │
+  │  ╚══════════════════════╝                                           │
+  │                                                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+```
+
+### How a user message flows through these layers
+
+```
+  USER MESSAGE FLOW
+  ═════════════════
+
+  ┌──────────┐
+  │  "add a  │
+  │  title   │
+  │  slide"  │
+  └────┬─────┘
+       │
+       │  POST /api/chat
+       ▼
+  ╔══════════╗
+  ║ HARNESS  ║──── setState({ selection })     ← inject per-request data
+  ╚════╤═════╝
+       │
+       │  route to active mode
+       ▼
+  ╔══════════╗
+  ║  MODE    ║──── which agent handles this?   ← plan or vibe
+  ╚════╤═════╝
+       │
+       │  call agent with message + state
+       ▼
+  ╔══════════╗
+  ║  AGENT   ║──── instructions(state) builds  ← dynamic system prompt
+  ║          ║     the system prompt
+  ╚════╤═════╝
+       │
+       │  LLM reasons, decides tool calls
+       ▼
+  ╔══════════╗     ╔══════════╗
+  ║  TOOLS   ║────►║  STATE   ║                ← tools read & write state
+  ║ execute()║     ║ setState ║
+  ╚════╤═════╝     ╚══════════╝
+       │
+       │  tool results feed back to agent
+       ▼
+  ╔══════════╗
+  ║  AGENT   ║──── generates final response    ← text tokens streamed
+  ╚════╤═════╝
+       │
+       │  events emitted
+       ▼
+  ╔══════════╗
+  ║  EVENT   ║──── agent.thinking               ← SSE to client
+  ║   BUS    ║     tool.calling
+  ║          ║     composition.delta
+  ║          ║     agent.responding
+  ║          ║     run.complete
+  ╚══════════╝
+```
 
 ---
 
@@ -22,15 +141,19 @@
 │                         └──────────────────┘  │  deferred      │  │
 │                                                └────────────────┘  │
 │                                                                   │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │                   MODE: "vibe" (default, only)               │ │
-│  │                                                              │ │
-│  │   Agent: Composer                                            │ │
-│  │   Model: openai/o4-mini                                      │ │
-│  │   instructions: buildComposerPrompt(state)  ← dynamic       │ │
-│  │   tools: contextTools + mutationTools + validationTools       │ │
-│  │                                                              │ │
-│  └──────────────────────────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────┐┌───────────────────────────┐ │
+│  │   MODE: "plan" (default)        ││   MODE: "vibe"             │ │
+│  │                                 ││                           │ │
+│  │   Agent: Planner                ││   Agent: Composer          │ │
+│  │   Model: o4-mini (low effort)   ││   Model: o4-mini (medium)  │ │
+│  │   instructions: buildPlan-      ││   instructions: buildVibe- │ │
+│  │     nerPrompt(state)            ││     Prompt(state)          │ │
+│  │   tools: contextTools ONLY      ││   tools: ALL tools         │ │
+│  │                                 ││                           │ │
+│  │   PURPOSE: think, propose plan  ││   PURPOSE: execute plan    │ │
+│  │   OUTPUT: structured plan card  ││   OUTPUT: composition      │ │
+│  │     (user approves → vibe)      ││     mutations + response   │ │
+│  └─────────────────────────────────┘└───────────────────────────┘ │
 │                                                                   │
 │  ┌──────────────────────────┐  ┌────────────────────────────────┐ │
 │  │       WORKSPACE          │  │          EVENT BUS             │ │
@@ -111,22 +234,142 @@ Per-thread, Zod-validated. Categorized by lifecycle.
 
 ---
 
-## 2. Mode — Composer (`vibe`)
+## 2. Modes — Plan + Vibe
 
-Single mode. Single agent. Single model.
+Two modes. Two agents. One model (different reasoning efforts).
 
-- **Mode ID**: `vibe` (default, only)
-- **Agent name**: Composer
-- **Model**: `openai/o4-mini` with `reasoningEffort: 'medium'` default, escalated to `'high'` for complex composition tasks
-- **Instructions**: dynamic function — `buildComposerPrompt(state)` — injects project meta, current composition summary, selection context, and available tools per turn
-- **Future modes** (not MVP): `plan` (structured planning before composing), `build` (code-level composition editing)
+### Why two modes?
+
+```
+  THE PROBLEM WITH A SINGLE MODE
+  ══════════════════════════════
+
+  User: "create a 30-second product video"
+         │
+         ▼
+  ╔════════════════════════════════════════╗
+  ║  Single-mode agent                    ║
+  ║                                       ║
+  ║  Immediately starts calling tools:    ║
+  ║    add-clip(bg)                       ║
+  ║    add-clip(title)                    ║
+  ║    add-clip(product-shot)             ║   ← no chance to review!
+  ║    add-clip(cta)                      ║
+  ║    add-clip(music)                    ║
+  ║                                       ║
+  ║  User sees 5 mutations fly by...      ║
+  ║  "Wait, I wanted it different!"       ║
+  ╚════════════════════════════════════════╝
+
+
+  THE TWO-MODE SOLUTION
+  ═════════════════════
+
+  User: "create a 30-second product video"
+         │
+         ▼
+  ╔═══════════════════════════════════════════════════════╗
+  ║  PLAN mode                                           ║
+  ║                                                      ║
+  ║  Agent proposes (no mutations):                      ║
+  ║                                                      ║
+  ║  ┌────────────────────────────────────────────────┐   ║
+  ║  │  📋 Plan                                       │   ║
+  ║  │                                                │   ║
+  ║  │  1. Background gradient (0–30s, track 0)       │   ║
+  ║  │  2. Product hero image (0–10s, track 1)        │   ║
+  ║  │  3. Title "New Product" (2–8s, track 2)        │   ║
+  ║  │  4. Features list (10–22s, track 1)            │   ║
+  ║  │  5. CTA + logo (22–30s, track 1)               │   ║
+  ║  │  6. Background music (0–30s, track 3)          │   ║
+  ║  │                                                │   ║
+  ║  │  Total: 30s, 4 tracks, 6 clips                │   ║
+  ║  │                                                │   ║
+  ║  │         [ ✓ Execute ]  [ ✎ Revise ]            │   ║
+  ║  └────────────────────────────────────────────────┘   ║
+  ╚═══════════════════════════════════════════════════════╝
+         │
+         │  User clicks "Execute" (or says "looks good")
+         ▼
+  ╔═══════════════════════════════════════════════════════╗
+  ║  VIBE mode                                           ║
+  ║                                                      ║
+  ║  Agent executes the approved plan:                   ║
+  ║    add-clip(bg-gradient, 0, 30, track 0)    → ✓      ║
+  ║    add-clip(product-hero, 0, 10, track 1)   → ✓      ║
+  ║    add-clip(title, 2, 6, track 2)           → ✓      ║
+  ║    add-clip(features, 10, 12, track 1)      → ✓      ║
+  ║    add-clip(cta-logo, 22, 8, track 1)       → ✓      ║
+  ║    add-clip(music, 0, 30, track 3)          → ✓      ║
+  ║    validate-composition()                   → ✓      ║
+  ║                                                      ║
+  ║  "Done — 6 clips created across 4 tracks."          ║
+  ╚═══════════════════════════════════════════════════════╝
+```
+
+### Mode definitions
+
+| | Plan mode | Vibe mode |
+|---|-----------|----------|
+| **ID** | `plan` | `vibe` |
+| **Default** | ✓ (first mode for new requests) | activated after plan approval |
+| **Agent** | Planner | Composer |
+| **Model** | `openai/o4-mini` | `openai/o4-mini` |
+| **Reasoning effort** | `low` (fast, cheap) | `medium` (thorough) |
+| **Tools** | Context only (read-only) | All tools (context + mutation + validation) |
+| **Output** | Structured plan card | Composition mutations + text |
+| **Purpose** | Think, propose, get approval | Execute approved plan |
+
+### When to skip Plan mode
+
+Not every message needs a plan. Simple edits go directly to Vibe:
+
+```
+  ┌──────────────────────────────────────────────────┐
+  │  ROUTING LOGIC (in route handler)                 │
+  │                                                   │
+  │  if (message is simple edit                       │
+  │      AND composition exists                       │
+  │      AND selection is present):                   │
+  │                                                   │
+  │    → straight to VIBE mode                        │
+  │    e.g. "make this clip 2s longer"                │
+  │         "change the title text"                   │
+  │         "remove this clip"                        │
+  │                                                   │
+  │  else (complex / generative):                     │
+  │                                                   │
+  │    → PLAN mode first                              │
+  │    e.g. "create a product video"                  │
+  │         "add an intro sequence"                   │
+  │         "restructure the timeline"                │
+  └──────────────────────────────────────────────────┘
+```
+
+For MVP, the routing is simple: if the user's message looks like a direct edit on a selected clip, skip planning. Otherwise, plan first. The agent can also self-route by calling a `propose-plan` tool in Vibe mode that pauses for approval.
+
+### Shape (not final code)
 
 ```ts
-// Shape only — not final code
+const planMode = {
+  id: 'plan',
+  name: 'Plan',
+  default: true,
+  agent: new Agent({
+    id: 'vibeframes-planner',
+    name: 'Planner',
+    model: 'openai/o4-mini',
+    instructions: ({ requestContext }) => {
+      const state = requestContext.get('harness').state;
+      return buildPlannerPrompt(state);
+    },
+    tools: { ...contextTools },  // read-only — no mutations
+  }),
+};
+
 const vibeMode = {
   id: 'vibe',
   name: 'Vibe',
-  default: true,
   agent: new Agent({
     id: 'vibeframes-composer',
     name: 'Composer',
@@ -140,26 +383,33 @@ const vibeMode = {
 };
 ```
 
-### What `buildComposerPrompt(state)` injects
+### What each prompt injects
 
 ```
-┌──────────────────────────────────────────────┐
-│  System prompt (rebuilt each turn)            │
-│                                              │
-│  1. Identity & role description              │
-│  2. Project context from state.projectMeta   │
-│  3. Composition summary:                     │
-│     - clip count, total duration, track map  │
-│     - or "no composition yet"                │
-│  4. Selection context:                       │
-│     - "user selected clip X (intent: edit)"  │
-│     - or "no active selection"               │
-│  5. Available skills (metadata only)         │
-│  6. Rules & constraints                      │
-│     - always validate after mutations        │
-│     - use structured tools, not raw HTML     │
-│     - respect HyperFrames data attributes    │
-└──────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  PLANNER PROMPT                     │  COMPOSER PROMPT           │
+  │  buildPlannerPrompt(state)          │  buildComposerPrompt(state)│
+  ├─────────────────────────────────────┼────────────────────────────┤
+  │                                     │                            │
+  │  1. Identity: "You are Planner.     │  1. Identity: "You are     │
+  │     You propose changes, never      │     Composer. You execute  │
+  │     execute them."                  │     using tools."          │
+  │                                     │                            │
+  │  2. Project context                 │  2. Project context        │
+  │     (state.projectMeta)             │     (state.projectMeta)    │
+  │                                     │                            │
+  │  3. Composition summary             │  3. Composition summary    │
+  │     (clip count, duration, tracks)  │     (full detail)          │
+  │                                     │                            │
+  │  4. Selection context               │  4. Selection context      │
+  │                                     │                            │
+  │  5. Output format: structured       │  5. Approved plan          │
+  │     plan card with numbered steps   │     (if coming from plan)  │
+  │                                     │                            │
+  │  6. "NEVER call mutation tools.     │  6. "Validate after every  │
+  │     Only propose."                  │     mutation batch."       │
+  │                                     │                            │
+  └─────────────────────────────────────┴────────────────────────────┘
 ```
 
 ---
@@ -281,33 +531,65 @@ Agent calls validate-composition
 
 ## 6. Events — the SSE contract
 
-Seven event types streamed from harness to client:
+Eight event types streamed from harness to client:
 
 | Event | Payload shape | UI response |
 |-------|---------------|-------------|
 | `agent.thinking` | `{ reasoningSummary? }` | Show thinking indicator / collapsible reasoning |
 | `agent.responding` | `{ text }` | Append to chat message bubble (streaming) |
+| `plan.proposed` | `{ steps[], summary }` | Show plan card with Execute / Revise buttons |
 | `tool.calling` | `{ toolName, args }` | Show tool card in chat ("Adding clip...") |
 | `tool.result` | `{ toolName, result, success }` | Update tool card (✓ or ✗) |
 | `composition.delta` | `{ op, path, value }` | Update preview player + timeline UI in real-time |
 | `run.complete` | `{ message, usage }` | Finalize chat message, show token count |
 | `run.error` | `{ error, code }` | Show error toast / inline error |
 
-### Event flow for a typical turn
+### Event flow: Plan → Execute
 
 ```
-User: "make the title clip 2 seconds longer"
-  │
-  ├── agent.thinking        { }
-  ├── tool.calling          { toolName: "get-composition", args: {} }
-  ├── tool.result           { toolName: "get-composition", success: true }
-  ├── tool.calling          { toolName: "update-clip", args: { clipId: "title-1", duration: 6 } }
-  ├── composition.delta     { op: "replace", path: "/clips/title-1/duration", value: 6 }
-  ├── tool.result           { toolName: "update-clip", success: true }
-  ├── tool.calling          { toolName: "validate-composition", args: {} }
-  ├── tool.result           { toolName: "validate-composition", success: true }
-  ├── agent.responding      { text: "Done — the title clip is now 6 seconds..." }
-  └── run.complete          { message: "Done — ...", usage: { ... } }
+  PLAN MODE TURN (complex request)
+  ════════════════════════════════
+
+  User: "create a 30-second product video"
+    │
+    ├── agent.thinking        { reasoningSummary: "Analyzing request..." }
+    ├── tool.calling          { toolName: "search-blocks", args: { intent: "product" } }
+    ├── tool.result           { toolName: "search-blocks", success: true }
+    ├── agent.responding      { text: "Here's my plan:" }
+    ├── plan.proposed         { steps: [...6 clips], summary: "30s, 4 tracks" }
+    └── run.complete          { message: "Here's my plan:...", usage: {...} }
+
+  User clicks [ ✓ Execute ]  →  harness switches to Vibe mode
+
+  VIBE MODE TURN (executing approved plan)
+  ════════════════════════════════════════
+
+    ├── agent.thinking        { }
+    ├── tool.calling          { toolName: "add-clip", args: { type: "element", ... } }
+    ├── composition.delta     { op: "add", path: "/clips/-", value: {...} }
+    ├── tool.result           { toolName: "add-clip", success: true }
+    ├──  ... (4 more add-clip calls)
+    ├── tool.calling          { toolName: "validate-composition", args: {} }
+    ├── tool.result           { toolName: "validate-composition", success: true }
+    ├── agent.responding      { text: "Done — 6 clips across 4 tracks." }
+    └── run.complete          { message: "Done — ...", usage: {...} }
+```
+
+### Event flow: Direct edit (skips Plan)
+
+```
+  User: "make the title clip 2 seconds longer"  [selection: title-1]
+    │
+    ├── agent.thinking        { }
+    ├── tool.calling          { toolName: "get-composition", args: {} }
+    ├── tool.result           { toolName: "get-composition", success: true }
+    ├── tool.calling          { toolName: "update-clip", args: { clipId: "title-1", duration: 6 } }
+    ├── composition.delta     { op: "replace", path: "/clips/title-1/duration", value: 6 }
+    ├── tool.result           { toolName: "update-clip", success: true }
+    ├── tool.calling          { toolName: "validate-composition", args: {} }
+    ├── tool.result           { toolName: "validate-composition", success: true }
+    ├── agent.responding      { text: "Done — the title clip is now 6 seconds." }
+    └── run.complete          { message: "Done — ...", usage: {...} }
 ```
 
 ---
@@ -326,7 +608,7 @@ getOrCreateHarness("proj-1")
   │     id: "vibeframes",
   │     resourceId: "proj-1",
   │     stateSchema: VibeStateSchema,
-  │     modes: [vibeMode],
+  │     modes: [planMode, vibeMode],
   │     workspace: { skills: ["./skills"] },
   │     disableBuiltinTools: ["task_write", "task_check", "submit_plan"],
   │   })
