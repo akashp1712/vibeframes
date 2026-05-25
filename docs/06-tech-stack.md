@@ -1,17 +1,17 @@
 # Tech Stack
 
-> **TL;DR** — Next.js 15 (App Router), Mastra + AI SDK + OpenAI `o4-mini`, LibSQL for Mastra storage (flag-swap to PgStore), Neon Postgres + Prisma for app data (deferred to M11), Clerk for auth (deferred to M11), Vercel for hosting, Vercel Blob for assets, shadcn/ui + Tailwind + Lucide for UI. This doc anchors every technology choice with a one-paragraph rationale, the alternative we rejected, and what we're learning by using it.
+> **TL;DR** — MVP runs fully self-contained: Next.js 15, Mastra + AI SDK + OpenAI `o4-mini`, LibSQL (local file DB), in-memory project store, no auth, local blob URLs. The **only external dependency is OpenAI**. Everything else — storage, auth, asset hosting, app database — layers on later without restructuring. This doc anchors every technology choice with a one-paragraph rationale and marks each as MVP or later-stage.
 
 ---
 
 ## 0. The stack at a glance
 
 ```
-  VIBEFRAMES TECH STACK
-  ═════════════════════
+  MVP STACK (M8–M10) — fully self-contained, only OpenAI is external
+  ═══════════════════════════════════════════════════════════════════
 
   ┌─────────────────────────────────────────────────────────────────────────┐
-  │                         VERCEL (hosting)                                │
+  │                    localhost:3000 (next dev)                             │
   │                                                                        │
   │  ┌──────────────────────────────────────────────────────────────────┐   │
   │  │                    NEXT.JS 15 (App Router)                       │   │
@@ -19,19 +19,17 @@
   │  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │   │
   │  │  │  React 19    │  │ Route        │  │ Server Components      │ │   │
   │  │  │  (client)    │  │ Handlers     │  │ + Server Actions       │ │   │
-  │  │  │              │  │ (API)        │  │ (data fetching)        │ │   │
-  │  │  └──────┬───────┘  └──────┬───────┘  └────────────────────────┘ │   │
-  │  │         │                 │                                      │   │
-  │  │         │     ┌───────────┘                                      │   │
-  │  │         │     │                                                  │   │
-  │  │         ▼     ▼                                                  │   │
+  │  │  │              │  │ /api/chat    │  │ (data fetching)        │ │   │
+  │  │  └──────────────┘  └──────┬───────┘  └────────────────────────┘ │   │
+  │  │                           │                                      │   │
+  │  │                           ▼                                      │   │
   │  │  ┌──────────────────────────────────────────────────────────┐    │   │
   │  │  │                    MASTRA + AI SDK                        │    │   │
   │  │  │                                                          │    │   │
   │  │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │    │   │
   │  │  │  │ Harness  │  │  Agent   │  │  Tools   │  │  Memory │ │    │   │
-  │  │  │  │ (state,  │  │ (modes,  │  │  (Zod    │  │  (hist, │ │    │   │
-  │  │  │  │  modes,  │  │  instrs, │  │  in/out) │  │   OM)   │ │    │   │
+  │  │  │  │ (state,  │  │ (modes,  │  │  (Zod    │  │  (hist) │ │    │   │
+  │  │  │  │  modes,  │  │  instrs, │  │  in/out) │  │         │ │    │   │
   │  │  │  │  skills) │  │  model)  │  │          │  │         │ │    │   │
   │  │  │  └──────────┘  └────┬─────┘  └──────────┘  └─────────┘ │    │   │
   │  │  │                     │                                    │    │   │
@@ -42,36 +40,79 @@
   │  │  │              │  (o4-mini)   │                            │    │   │
   │  │  │              └──────┬───────┘                            │    │   │
   │  │  └─────────────────────┼────────────────────────────────────┘    │   │
-  │  │                        │                                        │   │
   │  └────────────────────────┼────────────────────────────────────────┘   │
   │                           │                                            │
-  │                           ▼                                            │
-  │  ┌──────────────────────────────────────────────────────────────────┐   │
-  │  │                      EXTERNAL SERVICES                           │   │
-  │  │                                                                  │   │
-  │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────────┐  │   │
-  │  │  │  OpenAI  │  │  Neon    │  │  Clerk   │  │  Vercel Blob   │  │   │
-  │  │  │  API     │  │ Postgres │  │  (auth)  │  │  (assets)      │  │   │
-  │  │  │          │  │ + Prisma │  │          │  │                │  │   │
-  │  │  │  MVP     │  │  M11     │  │  M11     │  │  M10e          │  │   │
-  │  │  └──────────┘  └──────────┘  └──────────┘  └────────────────┘  │   │
-  │  │                                                                  │   │
-  │  │  ┌──────────────────────────────────────────────────────────┐   │   │
-  │  │  │  LibSQLStore (Mastra storage — local .db file)            │   │   │
-  │  │  │  flag-swap to PgStore when Neon lands in M11              │   │   │
-  │  │  └──────────────────────────────────────────────────────────┘   │   │
-  │  └──────────────────────────────────────────────────────────────────┘   │
-  └─────────────────────────────────────────────────────────────────────────┘
+  │  LOCAL STORAGE ───────────┼────────────────────────────────────────    │
+  │                           │                                            │
+  │  ┌──────────────────┐     │     ┌──────────────────┐                   │
+  │  │  LibSQLStore     │     │     │  In-memory        │                   │
+  │  │  file:local.db   │     │     │  project store    │                   │
+  │  │                  │     │     │                  │                   │
+  │  │  threads         │     │     │  projects[]      │                   │
+  │  │  messages        │     │     │  compositions[]  │                   │
+  │  │  OM records      │     │     │  assets (blob    │                   │
+  │  │                  │     │     │    URLs)         │                   │
+  │  │  survives        │     │     │  lost on         │                   │
+  │  │  restart ✓       │     │     │  restart ✗       │                   │
+  │  └──────────────────┘     │     └──────────────────┘                   │
+  │                           │                                            │
+  └───────────────────────────┼────────────────────────────────────────────┘
+                              │
+                              ▼  ← only external call
+                       ┌──────────────┐
+                       │   OpenAI     │
+                       │   API        │
+                       │  (o4-mini)   │
+                       └──────────────┘
 
+  CLIENT-SIDE
   ┌─────────────────────────────────────────────────────────────────────────┐
-  │                          CLIENT-SIDE                                    │
-  │                                                                        │
   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
   │  │ shadcn/  │  │ Tailwind │  │  Lucide  │  │ HyperFr  │  │ Kibo UI │ │
   │  │   ui     │  │  CSS v4  │  │  icons   │  │  Player  │  │  (chat) │ │
   │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └─────────┘ │
   └─────────────────────────────────────────────────────────────────────────┘
+
+
+  LATER-STAGE ADDITIONS (M11+) — layer on without restructuring
+  ═════════════════════════════════════════════════════════════
+
+  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+  │                                                                      │
+  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+  │  │  Neon        │  │  Clerk       │  │  Vercel Blob │               │
+  │  │  Postgres    │  │  (auth +     │  │  (asset      │               │
+  │  │  + Prisma    │  │   orgs)      │  │   bytes)     │               │
+  │  │              │  │              │  │              │               │
+  │  │  replaces:   │  │  adds:       │  │  replaces:   │               │
+  │  │  in-memory   │  │  middleware   │  │  blob URLs   │               │
+  │  │  store +     │  │  route guard  │  │  with durable│               │
+  │  │  LibSQL→     │  │  user model  │  │  CDN URLs    │               │
+  │  │  PgStore     │  │  workspaces  │  │              │               │
+  │  └──────────────┘  └──────────────┘  └──────────────┘               │
+  │                                                                      │
+  │  ┌──────────────┐                                                    │
+  │  │  Vercel      │  replaces: localhost:3000                          │
+  │  │  (hosting)   │  adds: preview deploys, edge middleware, CDN       │
+  │  └──────────────┘                                                    │
+  │                                                                      │
+  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
 ```
+
+### The MVP principle
+
+**The entire idea works end-to-end with just `pnpm dev` + an OpenAI key.** No database accounts, no auth provider, no cloud storage, no deployment platform. You type a message, the agent reasons, calls tools, mutates a composition, and you see it in the browser — all local.
+
+Everything else layers on later:
+
+| Concern | MVP (M8–M10) | Later (M11+) |
+|---|---|---|
+| **Mastra storage** | LibSQLStore (`file:local.db`) | PgStore → Neon |
+| **App data** | In-memory Map / JSON files | Prisma → Neon Postgres |
+| **Auth** | None (single user, no login) | Clerk (users, orgs, middleware) |
+| **Assets** | Local blob URLs (in-memory) | Vercel Blob (CDN URLs) |
+| **Hosting** | `localhost:3000` | Vercel (serverless) |
+| **External deps** | OpenAI API only | + Neon + Clerk + Vercel Blob |
 
 ---
 
@@ -167,69 +208,92 @@
 
 ---
 
-## 4. Storage strategy — LibSQL → PgStore
+## 4. Storage strategy — all-local MVP
 
-**What**: Two storage layers, serving different purposes:
+**What**: Two storage concerns, both local in MVP, both upgradeable later.
 
 ```
-  STORAGE LAYERS
-  ══════════════
+  MVP STORAGE — zero external dependencies
+  ═════════════════════════════════════════
 
   ┌─────────────────────────────────────────────────────────────────────┐
   │                                                                     │
-  │  LAYER 1: MASTRA STORAGE (agent state)                              │
+  │  MASTRA STORAGE (agent conversations)                               │
   │  ─────────────────────────────────────                              │
   │  What:   threads, messages, OM records, thread metadata             │
-  │  MVP:    LibSQLStore → file:local.db (survives dev restarts)        │
-  │  Prod:   PgStore → Neon Postgres (flag-swap in M11)                 │
-  │  Config: MASTRA_STORAGE=libsql|pg (env var)                         │
+  │  MVP:    LibSQLStore → file:local.db (local SQLite, zero config)    │
+  │  Config: MASTRA_STORAGE=libsql (env var, default)                   │
   │                                                                     │
-  │  ┌──────────────────┐         ┌──────────────────┐                  │
-  │  │  MVP (M9)        │   ───►  │  Prod (M11)      │                  │
-  │  │                  │  flag   │                  │                  │
-  │  │  LibSQLStore     │  swap   │  PgStore         │                  │
-  │  │  file:local.db   │         │  Neon Postgres   │                  │
-  │  │                  │         │                  │                  │
-  │  │  ✓ zero config   │         │  ✓ durable       │                  │
-  │  │  ✓ works offline │         │  ✓ multi-pod     │                  │
-  │  │  ✓ survives      │         │  ✓ serverless    │                  │
-  │  │    restart       │         │    friendly      │                  │
-  │  └──────────────────┘         └──────────────────┘                  │
+  │  ┌──────────────────────────────────────────────────────────────┐   │
+  │  │  LibSQLStore({ url: 'file:local.db' })                       │   │
+  │  │                                                              │   │
+  │  │  ✓ zero config — no accounts, no network                     │   │
+  │  │  ✓ works offline                                             │   │
+  │  │  ✓ survives dev server restarts                              │   │
+  │  │  ✓ single file — easy to inspect, delete, reset              │   │
+  │  └──────────────────────────────────────────────────────────────┘   │
   │                                                                     │
   │                                                                     │
-  │  LAYER 2: APP DATABASE (business data)                              │
-  │  ─────────────────────────────────────                              │
-  │  What:   users, workspaces, projects, compositions, assets          │
-  │  When:   M11 (deferred — no premature schema)                       │
-  │  Stack:  Neon Postgres + Prisma ORM                                 │
+  │  APP DATA (projects, compositions, assets)                          │
+  │  ─────────────────────────────────────────                          │
+  │  What:   project list, composition JSON, asset references           │
+  │  MVP:    In-memory Map + JSON file persistence (optional)           │
   │                                                                     │
-  │  ┌──────────────────────────────────────────────────────────┐       │
-  │  │  Prisma schema (M11):                                    │       │
-  │  │                                                          │       │
-  │  │  User ←──► Workspace (many-to-many via Membership)      │       │
-  │  │  Workspace ──► Project[]                                │       │
-  │  │  Project ──► Composition[]                              │       │
-  │  │  Project ──► Asset[]                                    │       │
-  │  └──────────────────────────────────────────────────────────┘       │
+  │  ┌──────────────────────────────────────────────────────────────┐   │
+  │  │  const projects = new Map<string, Project>()                 │   │
+  │  │  // or: read/write from data/projects.json                   │   │
+  │  │                                                              │   │
+  │  │  ✓ no schema to design prematurely                           │   │
+  │  │  ✓ shapes evolve freely during M8–M10                        │   │
+  │  │  ✗ lost on restart (Map) or manual (JSON)                    │   │
+  │  └──────────────────────────────────────────────────────────────┘   │
   │                                                                     │
   └─────────────────────────────────────────────────────────────────────┘
+
+
+  LATER-STAGE UPGRADE PATH (M11)
+  ══════════════════════════════
+
+  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+  │                                                                    │
+  │  MASTRA STORAGE:   LibSQLStore  ───►  PgStore (Neon Postgres)     │
+  │                    flag-swap via MASTRA_STORAGE=pg                  │
+  │                                                                    │
+  │  APP DATA:         In-memory    ───►  Prisma + Neon Postgres      │
+  │                    Map/JSON           proper schema + migrations    │
+  │                                                                    │
+  │  ASSETS:           blob URLs    ───►  Vercel Blob (CDN)           │
+  │                    (in-memory)                                      │
+  │                                                                    │
+  │  Prisma schema (designed in M11, not before):                      │
+  │  ┌──────────────────────────────────────────────────────────┐      │
+  │  │  User ←──► Workspace (many-to-many via Membership)      │      │
+  │  │  Workspace ──► Project[]                                │      │
+  │  │  Project ──► Composition[]                              │      │
+  │  │  Project ──► Asset[]                                    │      │
+  │  └──────────────────────────────────────────────────────────┘      │
+  │                                                                    │
+  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
 ```
 
-**Why two layers**: Mastra storage handles agent-internal state (threads, messages, OM). App data (projects, compositions, users) needs its own schema with proper relations, migrations, and query patterns. Mixing them would couple agent internals to business logic.
+**Why all-local MVP**: The point of M8–M10 is to prove the agent loop works end-to-end — chat → tools → composition → preview. External services add configuration ceremony, account setup, and failure modes that distract from the core idea. LibSQL + in-memory stores let you run the full product with `pnpm dev` and one env var (`OPENAI_API_KEY`).
 
-**Why LibSQL first**: Zero-config, works offline, file-based. Perfect for local dev where you want the Harness to survive `next dev` restarts without setting up a database. The `@mastra/libsql` package is a drop-in.
-
-**Why PgStore later**: Neon Postgres is serverless, branches for preview environments, and scales to production. When Neon lands in M11, we flag-swap `MASTRA_STORAGE=pg` and point it at the same Neon instance as the app database (different schema namespace).
+**Why the upgrade path is painless**:
+- `@mastra/libsql` and `@mastra/pg` implement the same `MastraStorage` interface — one-line swap
+- In-memory Map → Prisma is a data-access refactor, not an architecture change
+- Blob URLs → Vercel Blob is a storage-backend swap behind the same asset API
 
 **Decision recorded**: ADR-003 — Storage strategy (LibSQL → PgStore).
 
 ---
 
-## 5. Vercel — hosting
+## 5. Vercel — hosting (M12, later-stage)
 
-**What**: Vercel for deployment. Serverless functions (Node.js runtime) for API routes, Edge runtime optional for middleware, static assets on CDN.
+**What**: Vercel for production deployment. Serverless functions (Node.js runtime) for API routes, Edge runtime for middleware, static assets on CDN.
 
-**Why**: First-class Next.js deployment. Zero-config builds. Preview deployments per PR. Built-in analytics. The SSE route handler works on Vercel's Node runtime with up to 5 minutes execution time (Pro plan) — sufficient for agent turns.
+**MVP**: `localhost:3000` via `next dev`. No deployment target needed.
+
+**Why Vercel when we get there**: First-class Next.js deployment. Zero-config builds. Preview deployments per PR. Built-in analytics. The SSE route handler works on Vercel's Node runtime with up to 5 minutes execution time (Pro plan) — sufficient for agent turns.
 
 **Alternative rejected**: Self-hosted (Docker + Fly.io) — more control over long-running connections, but significantly more ops overhead. Railway — strong DX but smaller ecosystem. We accept Vercel's timeout constraints and optimize agent turns to complete within limits.
 
@@ -267,41 +331,41 @@
 
 ---
 
-## 6. Neon Postgres + Prisma — app data (M11)
+## 6. Neon Postgres + Prisma — app data (later-stage, M11)
 
 **What**: Neon for serverless Postgres hosting. Prisma as the TypeScript ORM with migrations, type-safe queries, and schema-as-code.
 
-**Why**: Neon's serverless driver (`@neondatabase/serverless`) works in Vercel's serverless functions without connection pooling issues. Prisma generates TypeScript types from the schema — eliminates runtime type mismatches. Database branching gives us preview environments for free.
+**MVP**: Not used. App data lives in an in-memory Map or JSON files. Shapes evolve freely.
+
+**Why Neon when we get there**: Neon's serverless driver (`@neondatabase/serverless`) works in Vercel's serverless functions without connection pooling issues. Prisma generates TypeScript types from the schema — eliminates runtime type mismatches. Database branching gives us preview environments for free.
 
 **Alternative rejected**: Supabase — strong all-in-one, but we only need Postgres + auth (Clerk handles auth). PlanetScale — MySQL, not Postgres. Drizzle ORM — lighter, but Prisma's migration story is more mature.
-
-**When**: Deferred to M11. Until then, app data (projects, compositions) lives in-memory or on disk. No premature schema design.
 
 **What we're learning**: Whether Neon's serverless driver introduces latency on cold starts and how Prisma's generated client performs in serverless.
 
 ---
 
-## 7. Clerk — auth & organizations (M11)
+## 7. Clerk — auth & organizations (later-stage, M11)
 
 **What**: Clerk for authentication, user management, and organization/workspace multi-tenancy.
 
-**Why**: Drop-in React components (`<SignIn>`, `<UserButton>`, `<OrganizationSwitcher>`). Next.js middleware integration for route protection. Organizations feature maps directly to workspaces. Eliminates auth plumbing — no password hashing, session management, or OAuth flows to build.
+**MVP**: Not used. No login, no users, no auth middleware. Single-user local dev.
+
+**Why Clerk when we get there**: Drop-in React components (`<SignIn>`, `<UserButton>`, `<OrganizationSwitcher>`). Next.js middleware integration for route protection. Organizations feature maps directly to workspaces. Eliminates auth plumbing — no password hashing, session management, or OAuth flows to build.
 
 **Alternative rejected**: NextAuth.js (Auth.js) — lower cost, but organizations/workspaces require significant custom code. Supabase Auth — tied to Supabase ecosystem.
 
-**When**: Deferred to M11. The core Harness loop (M9) runs without auth. Clerk layers on top without restructuring.
-
 ---
 
-## 8. Vercel Blob — asset storage (M10e)
+## 8. Vercel Blob — asset storage (later-stage, M11+)
 
 **What**: Vercel Blob for user-uploaded assets (images, audio files, video clips).
 
-**Why**: Works natively on Vercel with zero infra. Simple API: `put(filename, body)` → returns a URL. No S3 bucket configuration or IAM policies.
+**MVP**: Assets are local blob URLs created via `URL.createObjectURL()` or stored as base64 in memory. Lost on restart — acceptable for proving the idea.
+
+**Why Vercel Blob when we get there**: Works natively on Vercel with zero infra. Simple API: `put(filename, body)` → returns a durable CDN URL. No S3 bucket configuration or IAM policies.
 
 **Alternative rejected**: AWS S3 — more control but more ops. Cloudflare R2 — cheaper egress, but another vendor to manage. UploadThing — nice DX but adds a dependency.
-
-**When**: M10e (asset library). Until then, assets are blob URLs in memory.
 
 ---
 
@@ -386,23 +450,26 @@ No monorepo (Turborepo, Nx) for MVP — single Next.js app at repo root. If we l
 ## 12. Environment variables
 
 ```
-  ENV VARS (by module)
-  ════════════════════
+  ENV VARS (by phase)
+  ═══════════════════
 
-  MVP (M9):
-  ┌──────────────────────────────────────────────┐
-  │ OPENAI_API_KEY          ← OpenAI API access  │
-  │ VIBEFRAMES_MODEL        ← o4-mini (default)  │
-  │ MASTRA_STORAGE          ← libsql (default)   │
-  └──────────────────────────────────────────────┘
+  MVP (M8–M10) — just one required:
+  ┌────────────────────────────────────────────────────────┐
+  │ OPENAI_API_KEY          ← required (only external dep) │
+  │ VIBEFRAMES_MODEL        ← optional (default: o4-mini)  │
+  │ MASTRA_STORAGE          ← optional (default: libsql)   │
+  └────────────────────────────────────────────────────────┘
 
-  M11 (persistence + auth):
-  ┌──────────────────────────────────────────────┐
-  │ DATABASE_URL            ← Neon Postgres URL  │
-  │ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY            │
-  │ CLERK_SECRET_KEY                             │
-  │ BLOB_READ_WRITE_TOKEN  ← Vercel Blob access │
-  └──────────────────────────────────────────────┘
+  That's it. pnpm dev works with just OPENAI_API_KEY.
+
+  Later-stage (M11+):
+  ┌────────────────────────────────────────────────────────┐
+  │ DATABASE_URL            ← Neon Postgres URL            │
+  │ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY                      │
+  │ CLERK_SECRET_KEY                                       │
+  │ BLOB_READ_WRITE_TOKEN  ← Vercel Blob access           │
+  │ MASTRA_STORAGE=pg      ← flag-swap to PgStore         │
+  └────────────────────────────────────────────────────────┘
 ```
 
 ---

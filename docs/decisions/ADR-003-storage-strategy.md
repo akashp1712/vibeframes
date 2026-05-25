@@ -22,21 +22,26 @@ We need to choose a Mastra storage backend that works for local dev (M9) and can
 
 ## Decision
 
-**LibSQLStore for MVP (M9)**, with a **flag-swap to PgStore in M11** when Neon Postgres is added.
+**All-local MVP** — the entire product works end-to-end with zero external storage:
+
+- **Mastra storage**: LibSQLStore (`file:local.db`) — conversations survive restarts
+- **App data**: In-memory Map or JSON files — shapes evolve freely, no premature schema
+- **Assets**: Local blob URLs — lost on restart, acceptable for proving the idea
+
+Later-stage (M11): flag-swap to PgStore + Prisma + Vercel Blob.
 
 ```
-MASTRA_STORAGE=libsql   →  LibSQLStore({ url: 'file:local.db' })
-MASTRA_STORAGE=pg       →  PgStore({ connectionString: DATABASE_URL })
+MASTRA_STORAGE=libsql   →  LibSQLStore({ url: 'file:local.db' })    ← MVP default
+MASTRA_STORAGE=pg       →  PgStore({ connectionString: DATABASE_URL }) ← M11
 ```
-
-App data uses **Neon Postgres + Prisma** (M11, separate from Mastra storage).
 
 ## Rationale
 
-- **LibSQL first**: zero config, works offline, file-based. `pnpm dev` → agent loop works → conversation persists across restarts. No database setup ceremony for M9.
+- **All-local MVP**: The only env var you need is `OPENAI_API_KEY`. No database accounts, no cloud storage, no auth provider. `pnpm dev` → full agent loop works.
+- **LibSQL for Mastra**: zero config, works offline, file-based. Conversations persist across `next dev` restarts without any setup ceremony.
+- **In-memory for app data**: project shapes evolve freely during M8–M10. No migration headaches while the data model is fluid.
 - **Flag-swap, not rewrite**: `@mastra/libsql` and `@mastra/pg` implement the same `MastraStorage` interface. Swapping is one line in the Harness factory.
 - **Two layers, not one**: Mastra storage (agent internals) and app data (business domain) serve different purposes. Mixing them couples agent internals to business schema — bad for both.
-- **Neon deferred**: No premature schema design. The core Harness loop (M9) proves the agent works before we add persistence complexity.
 
 ## Tradeoffs
 
