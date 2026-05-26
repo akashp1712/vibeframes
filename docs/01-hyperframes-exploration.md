@@ -6,6 +6,8 @@
 
 ## 1. What HyperFrames is
 
+[hyperframes.dev](https://www.hyperframes.dev/) · [GitHub](https://github.com/heygen-com/hyperframes) · [prompting guide](https://hyperframes.heygen.com/guides/prompting)
+
 HyperFrames turns HTML into deterministic, frame-by-frame rendered video. The authoring surface is a plain HTML document — no React, no proprietary DSL, no build step. Every timed element is an HTML node decorated with data attributes.
 
 ```html
