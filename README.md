@@ -109,7 +109,7 @@ The MVP code implementation starts in **Milestone 8**. In the meantime, you can 
 
 1. **Clone the Repo:**
    ```bash
-   git clone https://github.com/AkashKumar7902/vibeframes.git
+   git clone https://github.com/akashp1712/vibeframes.git
    cd vibeframes
    ```
 
