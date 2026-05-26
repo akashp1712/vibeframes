@@ -1,48 +1,72 @@
 # VibeFrames
 
-> **A chat-first AI video studio.** Talk to an agent, watch the timeline build itself — clip by clip, track by track. Built on [Mastra Harness](https://mastra.ai) + [HeyGen HyperFrames](https://github.com/heygen-com/hyperframes).
+> **A Mastra Harness agent that composes videos through conversation.** You describe what you want. The agent reasons, calls tools, and builds a [HyperFrames](https://github.com/heygen-com/hyperframes) composition — clip by clip, track by track — while you watch.
 
-<!-- TODO: replace with 30-sec GIF at M9 -->
-
----
-
-## What is this repo?
-
-Three things at once:
-
-### 🎓 A learning resource
-Learn **Mastra Harness engineering** by reading the design docs that were written *before* the first line of code. Every architectural decision is documented, diagrammed, and explained from first principles.
-
-### 📐 A reference implementation
-The most thoroughly documented Mastra Harness project on GitHub. State schemas, tool design, SSE event protocols, storage strategy, mode architecture — all written as shareable specs with rich ASCII diagrams.
-
-### 🎬 A working product
-A web app where you describe a video in chat, and an AI agent composes it in real time using HyperFrames' HTML-native video engine. Plan mode thinks; Vibe mode builds.
+<!-- TODO: add demo GIF at M9 -->
 
 ---
 
-## What you'll learn
-
-If you read the docs in order, you'll understand:
-
-1. **What HyperFrames is** — HTML-native video, agent-friendly by design ([doc 01](./docs/01-hyperframes-exploration.md))
-2. **How Mastra works** — AI SDK → LLM → Agent → Tools → Memory, bottom-up ([doc 02](./docs/02-mastra-primer.md))
-3. **What a Harness is and why it exists** — the problems it solves that a plain Agent can't ([doc 03](./docs/03-harness-why-what-how.md))
-4. **How to design a Harness** — state, modes, tools, events mapped to a real product ([doc 04](./docs/04-our-harness-vhld.md))
-5. **SSE vs WebSocket vs polling** — and why SSE wins for agent chat ([doc 05](./docs/05-hld-tools-flows.md))
-6. **How to pick a tech stack** — with an MVP-first, all-local approach ([doc 06](./docs/06-tech-stack.md))
-7. **UI component survey** — palettes, typography, layout wireframes, open questions ([doc 07](./docs/07-ui-system.md))
-
-Plus **3 Architecture Decision Records** showing *why* decisions were made, not just what.
-
----
-
-## The approach: docs before code
-
-This project follows a deliberate methodology:
+## How it works
 
 ```
-  docs-only ┐
+  ┌──────────────┐    chat     ┌──────────────┐    tools    ┌──────────────┐
+  │              │   ──────►   │              │   ──────►   │              │
+  │     You      │             │    Mastra    │             │  HyperFrames │
+  │   describe   │             │   Harness    │             │   (render)   │
+  │   a video    │   ◄──────   │   agent      │   ◄──────   │              │
+  │              │    SSE      │              │   compose   │              │
+  └──────────────┘   events    └──────────────┘    tree     └──────────────┘
+```
+
+1. **You type** "add a title slide with the company logo"
+2. **Harness** routes to the right agent mode (plan or vibe), reasons about the request
+3. **Tools** mutate a canonical composition tree — typed state, Zod-validated inputs/outputs
+4. **HyperFrames** renders the composition as HTML in a `<hyperframes-player>` web component
+5. **SSE events** stream reasoning, tool calls, and composition deltas to the UI in real time
+
+The agent and human edit the same composition tree side by side — chat on one side, timeline on the other.
+
+---
+
+## The stack
+
+| Layer | Technology | Why |
+|---|---|---|
+| **Agent runtime** | [Mastra](https://mastra.ai) Harness | Typed state, modes, tools, memory, event bus — one class |
+| **Video engine** | [HyperFrames](https://github.com/heygen-com/hyperframes) | HTML-native, deterministic, agent-friendly by design |
+| **Model** | OpenAI `o4-mini` via [AI SDK](https://sdk.vercel.ai) | Reasoning-capable, cheap, fast |
+| **Framework** | Next.js 15 (App Router) | SSE route handlers, RSC, server actions |
+| **Storage** | LibSQL (local file) | Zero-config, survives restarts, swappable to Postgres |
+| **UI** | shadcn/ui + Tailwind CSS v4 | Copy-paste components, utility-first styling |
+
+**MVP runs fully local** — `pnpm dev` + one env var (`OPENAI_API_KEY`). No databases, no auth, no cloud services.
+
+---
+
+## What's inside
+
+The architecture was designed before the code. Every decision is documented with rationale and diagrams.
+
+| Doc | What it covers |
+|---|---|
+| [HyperFrames exploration](./docs/01-hyperframes-exploration.md) | The video engine — blocks, player, CLI, where agents fit |
+| [Mastra primer](./docs/02-mastra-primer.md) | AI SDK → Agent → Tools → Memory, bottom-up |
+| [Harness deep-dive](./docs/03-harness-why-what-how.md) | Why Harness exists, four stores, lifecycle, production patterns |
+| [Our Harness design](./docs/04-our-harness-vhld.md) | State schema, two modes, tools, events — mapped to VibeFrames |
+| [HLD — tools & flows](./docs/05-hld-tools-flows.md) | SSE protocol, composition pipeline, render, UI bridging |
+| [Tech stack](./docs/06-tech-stack.md) | Every choice with rationale — MVP-first, upgrade path documented |
+| [UI exploration](./docs/07-ui-system.md) | Palettes, typography, component survey, wireframes |
+
+**3 ADRs** ([SSE transport](./docs/decisions/ADR-001-sse-chat-transport.md), [LLM strategy](./docs/decisions/ADR-002-llm-provider-reasoning.md), [storage](./docs/decisions/ADR-003-storage-strategy.md)) record the non-obvious decisions.
+
+Start reading → [`docs/README.md`](./docs/README.md)
+
+---
+
+## Project status
+
+```
+  design    ┐
             │  M0  Origin & idea                    ✅
             │  M1  HyperFrames exploration           ✅
             │  M2  Mastra primer                     ✅
@@ -52,75 +76,24 @@ This project follows a deliberate methodology:
             │  M6  Tech stack                        ✅
             └  M7  UI system                         ✅
 
-  code      ┐
-            │  M8  Scaffold + HelloWorld
-            │  M9  Harness loop end-to-end     ← next up
+  build     ┐
+            │  M8  Scaffold + HelloWorld             ← next up
+            │  M9  Harness loop end-to-end
             │  M10 Full editor + tools + chat
             │  M11 Persistence + auth
             │  M12 Polish + deploy
             └  M13 Launch
 ```
 
-8 docs, 3 ADRs, and 8 journal entries were written before `package.json` existed. That's intentional — designing the system on paper first catches mistakes that are expensive to fix in code.
-
----
-
-## How the pieces fit
-
-```
-  ┌──────────────┐    chat     ┌──────────────┐    tools    ┌──────────────┐
-  │              │   ──────►   │              │   ──────►   │              │
-  │     You      │             │    Mastra    │             │  HyperFrames │
-  │              │   ◄──────   │   Harness    │   ◄──────   │   (render)   │
-  │              │    SSE      │              │   compose   │              │
-  └──────────────┘   events    └──────────────┘    tree     └──────────────┘
-```
-
-- **You** type "add a title slide with the company logo"
-- **Mastra Harness** routes to the right agent mode, reasons about the request, calls tools
-- **Tools** mutate a canonical composition tree (JSON → HTML)
-- **HyperFrames** renders the HTML in a `<hyperframes-player>` web component
-- **SSE events** stream the agent's thinking, tool calls, and composition changes to the UI in real time
-
-### MVP stack (all-local, one env var)
-
-| Layer | Technology |
-|---|---|
-| **Framework** | Next.js 15 (App Router) |
-| **Agent runtime** | Mastra Harness (`@mastra/core`) |
-| **Model** | OpenAI `o4-mini` via AI SDK |
-| **Storage** | LibSQL (local file DB) |
-| **Video engine** | HyperFrames (`<hyperframes-player>`) |
-| **UI** | shadcn/ui + Tailwind CSS v4 + Lucide |
-
-The entire product runs with `pnpm dev` + `OPENAI_API_KEY`. No databases, no auth, no cloud services.
-
----
-
-## Repo layout
-
-```
-vibeframes/
-├── docs/                 ← start here
-│   ├── README.md            doc index + reading guide
-│   ├── 00–07-*.md           architecture docs (one per module)
-│   ├── decisions/           ADRs (Architecture Decision Records)
-│   ├── journal/             build-in-public session logs
-│   └── lld/                 low-level designs (coming in M8+)
-├── experiments/           standalone spikes
-├── assets/                diagrams, screenshots, inspiration
-└── docs/meta/             build plan + execution protocol
-```
-
 ---
 
 ## Quick start
 
-**Read the docs** → start with [`docs/README.md`](./docs/README.md)
+**Explore the architecture** → [`docs/README.md`](./docs/README.md)
 
 **Run the app** (coming at M9):
 ```bash
-git clone https://github.com/YOUR_USERNAME/vibeframes.git
+git clone https://github.com/AkashKumar7902/vibeframes.git
 cd vibeframes
 pnpm install
 echo "OPENAI_API_KEY=sk-..." > .env.local
@@ -129,11 +102,18 @@ pnpm dev
 
 ---
 
-## Built in public
+## Repo layout
 
-Every session is logged in [`docs/journal/`](./docs/journal/). Every non-obvious decision gets an [ADR](./docs/decisions/). The commit history tells the story of the build, module by module.
-
-This project was built using AI pair programming (Cascade / Claude). The process itself — how to work effectively with AI on a real project — is part of what's being documented.
+```
+vibeframes/
+├── docs/                 architecture docs, ADRs, journal, LLDs
+│   ├── 00–07-*.md           one doc per design module
+│   ├── decisions/           Architecture Decision Records
+│   ├── journal/             session-by-session build log
+│   └── meta/                build plan + execution protocol
+├── experiments/           standalone spikes
+└── assets/                diagrams, screenshots
+```
 
 ---
 

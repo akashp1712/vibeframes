@@ -1,20 +1,16 @@
 # VibeFrames — Documentation
 
-> The project's spine. 8 architecture docs, 3 ADRs, and 8 journal entries — all written before the first line of application code.
+> Architecture and design docs for a Mastra Harness agent that composes HyperFrames videos. Every doc opens with a **TL;DR** you can read in under 30 seconds.
 
 ---
 
-## How to read these docs
+## Where to start
 
-**If you're learning Mastra / Harness engineering**, read docs 00–03 in order. They build a mental model from zero: origin story → HyperFrames → AI SDK basics → what a Harness is and why it exists.
-
-**If you're evaluating the architecture**, jump to docs 04–06: the Harness design, HLD, and tech stack. The ADRs in `decisions/` explain the *why* behind each non-obvious choice.
-
-**If you're here for the UI exploration**, doc 07 has palette candidates, typography pairings, component surveys, and ASCII wireframes.
-
-**If you want the build process**, the `journal/` folder has one entry per session — wins, friction, and next steps.
-
-Every doc opens with a **TL;DR** you can read in under 30 seconds.
+- **Docs 00–03** build the foundation: what HyperFrames is, how Mastra works, what a Harness is
+- **Docs 04–06** are the design: our Harness shape, tool/event protocol, tech stack
+- **Doc 07** explores UI direction: palettes, typography, components, wireframes
+- **`decisions/`** has the ADRs — the *why* behind non-obvious choices
+- **`journal/`** has the session-by-session build log
 
 ---
 
