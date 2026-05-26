@@ -111,8 +111,7 @@ vibeframes/
 │   ├── decisions/           Architecture Decision Records
 │   ├── journal/             session-by-session build log
 │   └── meta/                build plan + execution protocol
-├── experiments/           standalone spikes
-└── assets/                diagrams, screenshots
+└── experiments/           standalone spikes
 ```
 
 ---
