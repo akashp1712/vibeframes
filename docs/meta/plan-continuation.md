@@ -1,6 +1,6 @@
 ## Plan Continuation (v6 -> execution-ready)
 
-This continues `vibeframes/plan.md` with execution mechanics so modules can be run consistently.
+This continues `plan.md` (in this same folder) with execution mechanics so modules can be run consistently.
 
 ---
 

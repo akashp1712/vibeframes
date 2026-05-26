@@ -30,7 +30,7 @@
 - **Diagram tooling decided**: [OpenFlowKit](https://openflowkit.com/) for hero diagrams (system context, Harness anatomy, SSE flow). Free, local-first, diagram-as-code DSL, BYO LLM key, SVG/PNG/Figma export, plus a cinematic MP4 export that's actually unique. Convention captured in `docs/README.md`: inline ASCII for quick sketches, SVG in `assets/diagrams/` for hero diagrams, MP4 for one or two launch artifacts only.
 - **Tone of `README.md` + `00-origin-story.md` revised**: stripped autobiographical / build-in-public / learning-intent framing. Docs now read as "what this is" rather than "why I'm doing this".
 - M1 next: install `@hyperframes/player` in `experiments/hyperframes-hello/`, render a static composition, and write the exploration doc that answers *"where exactly does an agent multiply this stack?"*
-- Plan file lives at `~/.windsurf/plans/vibeframes-v6-eae326.md` (private to my machine — not committed).
+- Plan file lives in `docs/meta/plan.md` (committed to repo).
 - Repo is still local-only; will create the private GitHub remote in M1 or M2 and flip public after M7.
 
 ---

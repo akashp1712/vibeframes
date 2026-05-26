@@ -11,7 +11,7 @@ VibeFrames has two distinct storage needs:
 1. **Mastra storage** — threads, messages, observational memory records, thread metadata. Managed by the Harness and Memory subsystem.
 2. **App data** — users, workspaces, projects, compositions, assets. Business domain, relational, needs migrations.
 
-We need to choose a Mastra storage backend that works for local dev (M9) and can be swapped to production (M11) without restructuring.
+The Mastra storage backend must work for local dev and be swappable to production without restructuring.
 
 ## Options considered
 
