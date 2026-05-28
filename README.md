@@ -5,6 +5,12 @@
 
 ![VibeFrames Banner](./assets/vibeframes_banner.png)
 
+### 📺 Live HTML-Native Promo Showcase
+
+VibeFrames composes **HTML-native videos** that render inside the browser. Rather than a flat, static MP4, the promotional video showing our stack is fully interactive and seekable! You can preview the live compiled composition (with synchronized sliding whooshes, chime pops, and typewriting sound effects) directly inside the running app:
+
+👉 **[Watch the Live HTML-Native Intro Showcase](http://localhost:3000/intro/index.html)** *(or serve `public/intro/index.html` locally)*
+
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)

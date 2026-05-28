@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Script from "next/script";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
@@ -6,8 +7,13 @@ import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 
 export function Hero() {
   return (
-    <section className="flex flex-1 flex-col items-center justify-center px-4">
-      <div className="flex max-w-2xl flex-col items-center gap-6 py-24 text-center">
+    <section className="flex flex-1 flex-col items-center justify-center px-4 w-full">
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@hyperframes/player"
+        strategy="afterInteractive"
+      />
+
+      <div className="flex max-w-2xl flex-col items-center gap-6 pt-24 pb-12 text-center">
         <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1 shadow-sm">
           <Sparkles className="size-3 text-primary" />
           <AnimatedShinyText className="text-xs font-medium">
@@ -57,6 +63,19 @@ export function Hero() {
           >
             Read the Docs
           </Button>
+        </div>
+      </div>
+
+      {/* Dynamic HTML-Native Promo Video Showcase */}
+      <div className="relative w-full max-w-4xl aspect-[16/9] rounded-2xl border border-stone-200/80 bg-white/40 p-2 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] backdrop-blur-xs mb-24">
+        <div className="relative h-full w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
+          <hyperframes-player
+            src="/intro/composition.html"
+            controls
+            autoplay
+            loop
+            className="block h-full w-full"
+          />
         </div>
       </div>
     </section>

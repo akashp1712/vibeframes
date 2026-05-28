@@ -1,0 +1,776 @@
+<!-- 
+  VibeFrames Promo Intro Video Composition
+  Uses Tailwind CSS CDN + Geist & Instrument Serif Typography + GSAP Animation Engine
+  Validated with HyperFrames timing playhead rules (class="clip" + data attributes).
+-->
+<div
+  id="root"
+  data-composition-id="vibeframes-intro"
+  data-start="0"
+  data-width="1920"
+  data-height="1080"
+  data-duration="30"
+  style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #fbfaf7"
+>
+  <!-- Import Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Import Custom Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind Theme Customizations -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Geist", "system-ui", "sans-serif"],
+            serif: ["Instrument Serif", "Georgia", "serif"],
+          },
+          colors: {
+            brand: {
+              neutral: "#fbfaf7",
+              primary: "#4f46e5",
+              secondary: "#7c3aed",
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom CSS for specific micro-effects -->
+  <style>
+    /* Typing Cursor Blinking */
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      height: 48px;
+      background: #4f46e5;
+      margin-left: 4px;
+      animation: blink 0.8s infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+    }
+  </style>
+
+  <!-- Track 0: Full-Screen Ambient Background Glow -->
+  <div
+    id="bg-glow"
+    class="clip"
+    data-start="0"
+    data-duration="30"
+    data-track-index="0"
+    style="
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at 50% 50%,
+        rgba(79, 70, 229, 0.04) 0%,
+        rgba(251, 250, 247, 0) 75%
+      );
+      pointer-events: none;
+      z-index: 1;
+    "
+  ></div>
+
+  <!-- Sound Effects Track Layer -->
+  <!-- Beat 1 typing -->
+  <audio id="sfx-typing" class="clip" data-start="1.0" data-duration="2.2" data-track-index="11" src="./sfx/typing.mp3" data-volume="0.8"></audio>
+  
+  <!-- Whooshes for transitions -->
+  <audio id="sfx-whoosh1" class="clip" data-start="4.5" data-duration="0.5" data-track-index="12" src="./sfx/whoosh-short.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-whoosh2" class="clip" data-start="9.5" data-duration="0.5" data-track-index="12" src="./sfx/whoosh-short.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-whoosh3" class="clip" data-start="14.5" data-duration="0.5" data-track-index="12" src="./sfx/whoosh-short.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-whoosh4" class="clip" data-start="19.5" data-duration="0.5" data-track-index="12" src="./sfx/whoosh-short.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-whoosh5" class="clip" data-start="24.5" data-duration="0.5" data-track-index="12" src="./sfx/whoosh-short.mp3" data-volume="0.6"></audio>
+
+  <!-- Beat 2: pop & chime -->
+  <audio id="sfx-pop-b2" class="clip" data-start="5.4" data-duration="0.5" data-track-index="13" src="./sfx/pop.mp3" data-volume="0.7"></audio>
+  <audio id="sfx-chime-b2" class="clip" data-start="5.6" data-duration="0.8" data-track-index="14" src="./sfx/chime.mp3" data-volume="0.7"></audio>
+
+  <!-- Beat 3: floating chat bubble notification -->
+  <audio id="sfx-notif-b3" class="clip" data-start="11.4" data-duration="1.0" data-track-index="15" src="./sfx/notification.mp3" data-volume="0.6"></audio>
+
+  <!-- Beat 4: click, sparkle, click, ping -->
+  <audio id="sfx-click1-b4" class="clip" data-start="15.5" data-duration="0.3" data-track-index="16" src="./sfx/click-soft.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-sparkle-b4" class="clip" data-start="15.9" data-duration="0.8" data-track-index="17" src="./sfx/sparkle.mp3" data-volume="0.5"></audio>
+  <audio id="sfx-click2-b4" class="clip" data-start="16.1" data-duration="0.3" data-track-index="18" src="./sfx/click-soft.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-ping-b4" class="clip" data-start="16.8" data-duration="0.8" data-track-index="19" src="./sfx/ping.mp3" data-volume="0.7"></audio>
+
+  <!-- Beat 5: sequential pops, vitest chime & riser -->
+  <audio id="sfx-badge1" class="clip" data-start="20.5" data-duration="0.5" data-track-index="20" src="./sfx/pop.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-badge2" class="clip" data-start="20.7" data-duration="0.5" data-track-index="21" src="./sfx/pop.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-badge3" class="clip" data-start="20.9" data-duration="0.5" data-track-index="20" src="./sfx/pop.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-badge4" class="clip" data-start="21.1" data-duration="0.5" data-track-index="21" src="./sfx/pop.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-badge5" class="clip" data-start="21.3" data-duration="0.5" data-track-index="20" src="./sfx/pop.mp3" data-volume="0.6"></audio>
+  <audio id="sfx-test-chime" class="clip" data-start="21.8" data-duration="0.8" data-track-index="22" src="./sfx/chime.mp3" data-volume="0.7"></audio>
+  <audio id="sfx-riser" class="clip" data-start="21.5" data-duration="4.0" data-track-index="25" src="./sfx/riser.mp3" data-volume="0.5"></audio>
+
+  <!-- Beat 6: bass impact & cta sparkle -->
+  <audio id="sfx-impact" class="clip" data-start="25.5" data-duration="1.5" data-track-index="23" src="./sfx/impact-bass-1.mp3" data-volume="0.8"></audio>
+  <audio id="sfx-cta-sparkle" class="clip" data-start="26.5" data-duration="0.8" data-track-index="24" src="./sfx/sparkle.mp3" data-volume="0.7"></audio>
+
+  <!-- ==================== BEAT 1: THE HOOK (0s - 5s) ==================== -->
+  <div
+    id="beat1"
+    class="clip flex flex-col items-center justify-between py-36 px-16"
+    data-start="0"
+    data-duration="5"
+    data-track-index="1"
+    style="position: absolute; inset: 0; opacity: 0; transform: translateY(40px); z-index: 10"
+  >
+    <!-- Shimmer Badge -->
+    <div
+      id="b1-badge"
+      class="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-stone-200 rounded-full text-lg font-medium text-indigo-600 shadow-sm"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+        />
+        <path d="M20 3v4" />
+        <path d="M22 5h-4" />
+        <path d="M4 17v2" />
+        <path d="M5 18H3" />
+      </svg>
+      docs-first, now code
+    </div>
+
+    <!-- Typing Card -->
+    <div
+      id="b1-card"
+      class="relative bg-white border border-stone-200 rounded-2xl shadow-sm p-12 w-[900px] text-left"
+    >
+      <!-- Glow outline simulated border beam -->
+      <div
+        class="absolute -inset-[1px] bg-gradient-to-r from-indigo-500 via-purple-500 to-transparent opacity-20 blur-[1px] rounded-[17px] -z-10"
+      ></div>
+
+      <div class="flex items-center gap-2.5 mb-6">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#7c3aed"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <span class="font-semibold text-lg text-stone-400">CHAT PROMPT</span>
+      </div>
+      <div class="text-[40px] font-medium text-stone-900 leading-snug">
+        <span id="typing-text"></span><span class="cursor"></span>
+      </div>
+    </div>
+
+    <div class="text-xl text-stone-400 font-normal">A Mastra Harness Video Agent</div>
+  </div>
+
+  <!-- ==================== BEAT 2: THE SOLUTION (5s - 10s) ==================== -->
+  <div
+    id="beat2"
+    class="clip flex flex-col items-center justify-center gap-10"
+    data-start="5"
+    data-duration="5"
+    data-track-index="2"
+    style="position: absolute; inset: 0; opacity: 0; transform: translateY(40px); z-index: 10"
+  >
+    <!-- Badge -->
+    <div
+      id="b2-badge"
+      class="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50/40 border border-indigo-100 rounded-full text-lg font-medium text-indigo-600 shadow-sm"
+    >
+      🎬 Introducing VibeFrames
+    </div>
+    <!-- Headline -->
+    <h1
+      id="b2-headline"
+      class="font-sans text-[92px] font-bold tracking-tight leading-none text-stone-900"
+    >
+      Compose videos<br />
+      <span class="bg-gradient-to-r from-indigo-600 to-purple-500 bg-clip-text text-transparent"
+        >through conversation.</span
+      >
+    </h1>
+    <!-- Description -->
+    <p id="b2-desc" class="text-3xl text-stone-500 max-w-[1000px] leading-relaxed">
+      Describe what you want. The agent reasons, calls Zod-typed tools, and builds a professional
+      canvas in real time.
+    </p>
+  </div>
+
+  <!-- ==================== BEAT 3: THE 4-PANE STUDIO (10s - 15s) ==================== -->
+  <div
+    id="beat3"
+    class="clip flex flex-col items-center justify-center"
+    data-start="10"
+    data-duration="5"
+    data-track-index="1"
+    style="position: absolute; inset: 0; opacity: 0; transform: translateY(40px); z-index: 10"
+  >
+    <div
+      class="w-[1400px] h-[700px] bg-stone-50/50 border border-stone-200 rounded-3xl shadow-lg grid grid-cols-[240px_1fr_280px] grid-rows-[50px_1fr_180px] overflow-hidden"
+    >
+      <!-- Topbar -->
+      <div
+        class="col-span-3 border-b border-stone-200 bg-white flex items-center justify-between px-6"
+      >
+        <div class="flex items-center gap-2 font-semibold text-[14px]">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#4f46e5"
+            stroke-width="2.5"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M7 3v18" />
+            <path d="M3 7.5h4" />
+            <path d="M3 12h18" />
+            <path d="M3 16.5h4" />
+            <path d="M17 3v18" />
+            <path d="M17 7.5h4" />
+            <path d="M17 16.5h4" />
+          </svg>
+          VibeFrames Studio
+        </div>
+        <div class="text-[12px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded">
+          Project: intro-teaser
+        </div>
+      </div>
+
+      <!-- Left sidebar -->
+      <div class="studio-sidebar border-r border-stone-200 bg-white p-4 text-left">
+        <div class="font-semibold text-[12px] text-stone-400 mb-3 uppercase tracking-wider">
+          ASSETS
+        </div>
+        <div class="flex flex-col gap-2 text-[11px]">
+          <div class="p-2 bg-stone-100 rounded text-stone-600">🎥 bg-gradient.mp4</div>
+          <div class="p-2 bg-stone-100 rounded text-stone-600">🖼️ brand-logo.png</div>
+          <div class="p-2 bg-stone-100 rounded text-stone-600">🎵 ambient-beat.wav</div>
+        </div>
+      </div>
+
+      <!-- Canvas middle -->
+      <div class="studio-canvas bg-stone-50 flex items-center justify-center p-6 relative">
+        <div
+          id="canvas-glow"
+          class="w-[80%] h-[80%] bg-white border border-stone-200 rounded-lg shadow-sm flex flex-col items-center justify-center relative"
+        >
+          <!-- Inner preview mockup -->
+          <div
+            class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-stone-200 rounded-full text-[12px] font-medium text-indigo-600 shadow-xs mb-3"
+          >
+            HyperFrames CDN Player
+          </div>
+          <div class="text-3xl font-bold text-indigo-600">PREVIEW CANVAS</div>
+          <div class="text-[11px] text-stone-400 mt-1">00:12 / 00:30</div>
+        </div>
+
+        <!-- Floating chat bubble overlay -->
+        <div
+          id="floating-chat"
+          class="absolute bottom-8 right-8 bg-white border border-indigo-100/80 rounded-2xl shadow-xl p-5 w-[380px] text-left"
+        >
+          <div class="flex items-center gap-2 mb-3 border-b border-stone-100 pb-2">
+            <div class="w-2.5 h-2.5 bg-indigo-600 rounded-full animate-pulse"></div>
+            <span class="font-bold text-[13px] text-indigo-600">🤖 PLANNER AGENT</span>
+          </div>
+          <div class="text-[13px] text-stone-900 font-medium mb-2">
+            ▸ Thinking: analyzing design guidelines...
+          </div>
+          <div
+            class="text-[11px] font-mono bg-stone-50 border border-stone-200 p-2 rounded text-purple-600"
+          >
+            ⚙ search-blocks({ intent: "intro" })
+          </div>
+        </div>
+      </div>
+
+      <!-- Right sidebar properties -->
+      <div class="studio-chat border-l border-stone-200 bg-white p-5 flex flex-col gap-4 text-left">
+        <div class="font-semibold text-[12px] text-stone-400 uppercase tracking-wider">
+          PROPERTIES
+        </div>
+        <div class="flex flex-col gap-3 text-[11px]">
+          <div>
+            <label class="text-stone-400 block mb-1">Tag</label>
+            <input
+              type="text"
+              value="h1"
+              disabled
+              class="w-full p-1.5 border border-stone-200 rounded bg-stone-50 text-stone-600"
+            />
+          </div>
+          <div>
+            <label class="text-stone-400 block mb-1">Duration</label>
+            <input
+              type="text"
+              value="30s"
+              disabled
+              class="w-full p-1.5 border border-stone-200 rounded bg-stone-50 text-stone-600"
+            />
+          </div>
+          <div>
+            <label class="text-stone-400 block mb-1">Layout</label>
+            <input
+              type="text"
+              value="Grid"
+              disabled
+              class="w-full p-1.5 border border-stone-200 rounded bg-stone-50 text-stone-600"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline bottom -->
+      <div
+        class="studio-timeline col-span-3 border-t border-stone-200 bg-white p-4 flex flex-col gap-3 text-left"
+      >
+        <div
+          class="flex justify-between text-[10px] font-semibold text-stone-400 uppercase tracking-wider"
+        >
+          <span>TIMELINE TRACKS</span>
+          <span class="font-mono"
+            >0s &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10s
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20s
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 30s</span
+          >
+        </div>
+        <div
+          class="timeline-bar h-6 bg-indigo-50/30 border border-dashed border-indigo-200 rounded-md relative"
+        >
+          <div
+            class="timeline-segment absolute top-0 bottom-0 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-600 text-[11px] font-semibold flex items-center pl-2"
+            style="left: 0; width: 100%"
+          >
+            bg-gradient (0-30s)
+          </div>
+        </div>
+        <div
+          class="timeline-bar h-6 bg-indigo-50/30 border border-dashed border-indigo-200 rounded-md relative"
+        >
+          <div
+            class="timeline-segment absolute top-0 bottom-0 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center pl-2"
+            style="left: 16%; width: 50%"
+          >
+            title-card (5-20s)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BEAT 4: PIPELINE (15s - 20s) ==================== -->
+  <div
+    id="beat4"
+    class="clip flex flex-col items-center justify-center gap-12"
+    data-start="15"
+    data-duration="5"
+    data-track-index="2"
+    style="position: absolute; inset: 0; opacity: 0; transform: translateY(40px); z-index: 10"
+  >
+    <!-- Header -->
+    <div class="text-center max-w-[600px]">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-stone-200 rounded-full text-lg font-medium text-indigo-600 shadow-sm mb-3"
+      >
+        ⚡ Unified Pipeline
+      </div>
+      <h2 class="text-4xl font-bold text-stone-900 leading-tight">JSON State to Serialized HTML</h2>
+    </div>
+
+    <!-- Code Comparison -->
+    <div class="flex items-center gap-12">
+      <!-- JSON Card -->
+      <div
+        id="b4-json"
+        class="code-editor bg-white border border-stone-200 rounded-xl p-6 font-mono text-[18px] leading-relaxed text-stone-700 shadow-xs w-[550px] text-left"
+      >
+        <div class="text-stone-400 text-sm font-semibold mb-3 uppercase tracking-wider">
+          CANONICAL JSON STATE
+        </div>
+        {<br />
+        &nbsp;&nbsp;<span class="code-key">"id"</span>:
+        <span class="code-val">"title-1"</span>,<br />
+        &nbsp;&nbsp;<span class="code-key">"type"</span>:
+        <span class="code-val">"text"</span>,<br />
+        &nbsp;&nbsp;<span class="code-key">"start"</span>: <span class="code-attr">0.5</span>,<br />
+        &nbsp;&nbsp;<span class="code-key">"duration"</span>:
+        <span class="code-attr">5.0</span>,<br />
+        &nbsp;&nbsp;<span class="code-key">"content"</span>: {<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">"text"</span>:
+        <span class="code-val">"Hello, World"</span><br />
+        &nbsp;&nbsp;}<br />
+        }
+      </div>
+
+      <!-- Arrow -->
+      <div id="b4-arrow" class="text-6xl text-indigo-600 font-light select-none">➔</div>
+
+      <!-- HTML Card -->
+      <div
+        id="b4-html"
+        class="code-editor bg-white border border-stone-200 rounded-xl p-6 font-mono text-[18px] leading-relaxed text-stone-700 shadow-xs w-[550px] text-left"
+      >
+        <div class="text-stone-400 text-sm font-semibold mb-3 uppercase tracking-wider">
+          SERIALIZED HYPERFRAMES HTML
+        </div>
+        &lt;<span class="code-tag">h1</span> <span class="code-attr">id</span>=<span
+          class="code-val"
+          >"title-1"</span
+        ><br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-attr">class</span>=<span class="code-val"
+          >"clip"</span
+        ><br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-attr">data-start</span>=<span class="code-val"
+          >"0.5"</span
+        ><br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-attr">data-duration</span>=<span class="code-val"
+          >"5.0"</span
+        ><br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-attr">data-track-index</span>=<span
+          class="code-val"
+          >"1"</span
+        >&gt;<br />
+        &nbsp;&nbsp;Hello, World<br />
+        &lt;/<span class="code-tag">h1</span>&gt;
+      </div>
+    </div>
+
+    <!-- Success Badge -->
+    <div
+      id="b4-badge"
+      class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-base font-semibold text-emerald-600"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      validate-composition ✓
+    </div>
+  </div>
+
+  <!-- ==================== BEAT 5: DEV-FIRST STACK (20s - 25s) ==================== -->
+  <div
+    id="beat5"
+    class="clip flex flex-col items-center justify-center gap-14"
+    data-start="20"
+    data-duration="5"
+    data-track-index="1"
+    style="position: absolute; inset: 0; opacity: 0; transform: translateY(40px); z-index: 10"
+  >
+    <div class="text-center">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-stone-200 rounded-full text-lg font-medium text-indigo-600 shadow-sm mb-3"
+      >
+        🛠️ Developer-First Stack
+      </div>
+      <h2 class="text-5xl font-bold tracking-tight text-stone-900 leading-tight">
+        Built with Modern Composability
+      </h2>
+    </div>
+
+    <!-- Badges Grid -->
+    <div class="flex gap-6">
+      <div
+        class="tech-badge px-7 py-3 bg-indigo-50/30 border border-indigo-100 rounded-full text-2xl font-bold text-indigo-600 shadow-xs"
+        id="b5-b1"
+      >
+        Next.js 16
+      </div>
+      <div
+        class="tech-badge px-7 py-3 bg-indigo-50/30 border border-indigo-100 rounded-full text-2xl font-bold text-indigo-600 shadow-xs"
+        id="b5-b2"
+      >
+        React 19
+      </div>
+      <div
+        class="tech-badge px-7 py-3 bg-indigo-50/30 border border-indigo-100 rounded-full text-2xl font-bold text-indigo-600 shadow-xs"
+        id="b5-b3"
+      >
+        Mastra Harness
+      </div>
+      <div
+        class="tech-badge px-7 py-3 bg-indigo-50/30 border border-indigo-100 rounded-full text-2xl font-bold text-indigo-600 shadow-xs"
+        id="b5-b4"
+      >
+        Tailwind v4
+      </div>
+      <div
+        class="tech-badge px-7 py-3 bg-indigo-50/30 border border-indigo-100 rounded-full text-2xl font-bold text-indigo-600 shadow-xs"
+        id="b5-b5"
+      >
+        HyperFrames
+      </div>
+    </div>
+
+    <!-- Vitest Success Card -->
+    <div
+      id="b5-test-card"
+      class="bg-white border border-emerald-200 rounded-2xl flex items-center justify-center gap-6 px-12 py-6 w-[600px] shadow-sm"
+    >
+      <div
+        class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <div class="text-left">
+        <div class="font-bold text-[22px] text-stone-900">Vitest TDD Green</div>
+        <div class="text-[15px] color-emerald-600 text-emerald-600 font-semibold">
+          ✓ 44 passed (100% correct)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BEAT 6: OUTRO (25s - 30s) ==================== -->
+  <div
+    id="beat6"
+    class="clip flex flex-col items-center justify-center gap-14"
+    data-start="25"
+    data-duration="5"
+    data-track-index="1"
+    style="position: absolute; inset: 0; opacity: 0; transform: translateY(40px); z-index: 10"
+  >
+    <!-- Visual Symbol -->
+    <div
+      id="b6-symbol"
+      class="w-[100px] h-[100px] bg-indigo-50 border border-indigo-100 rounded-[30px] flex items-center justify-center text-indigo-600 shadow-xs"
+    >
+      <svg
+        width="50"
+        height="50"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-film"
+      >
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M7 3v18" />
+        <path d="M3 7.5h4" />
+        <path d="M3 12h18" />
+        <path d="M3 16.5h4" />
+        <path d="M17 3v18" />
+        <path d="M17 7.5h4" />
+        <path d="M17 16.5h4" />
+      </svg>
+    </div>
+
+    <!-- Slogan -->
+    <div class="text-center flex flex-col gap-4">
+      <h1
+        id="b6-title"
+        class="font-serif text-[84px] font-normal leading-tight italic text-stone-950"
+      >
+        Start Composing today.
+      </h1>
+      <p id="b6-subtitle" class="text-2xl text-stone-500 font-sans">
+        Open the studio to code, design, and vibe.
+      </p>
+    </div>
+
+    <!-- Shimmer CTA Button -->
+    <button id="b6-btn" class="shimmer-btn">
+      <div class="shimmer-glow"></div>
+      Open Studio
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        class="inline-block align-middle ml-1.5"
+      >
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+      </svg>
+    </button>
+
+    <!-- Footer URL -->
+    <div id="b6-footer" class="text-base text-stone-400 font-semibold tracking-wide">
+      vibeframes.vercel.app
+    </div>
+  </div>
+
+  <!-- GSAP Animation Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+
+  <script>
+    // Initialize GSAP Timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // Set initial beat coordinates
+    gsap.set("#beat1, #beat2, #beat3, #beat4, #beat5, #beat6", { opacity: 0, y: 40 });
+
+    // ==================== BEAT 1 (0.0s - 5.0s) ====================
+    tl.to("#beat1", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0.2);
+
+    // Typewriting text simulation inside Beat 1
+    const textToType = "make me an intro video for my project...";
+    const typingObj = { charIndex: 0 };
+    tl.to(
+      typingObj,
+      {
+        charIndex: textToType.length,
+        duration: 2.2,
+        ease: "none",
+        onUpdate: function () {
+          document.getElementById("typing-text").textContent = textToType.substring(
+            0,
+            Math.floor(typingObj.charIndex),
+          );
+        },
+      },
+      1.0,
+    );
+
+    // Exit Beat 1
+    tl.to("#beat1", { opacity: 0, y: -40, duration: 0.6, ease: "power2.in" }, 4.5);
+
+    // ==================== BEAT 2 (5.0s - 10.0s) ====================
+    tl.to("#beat2", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 5.2);
+
+    // Stagger entrances inside Beat 2
+    tl.from("#b2-badge", { opacity: 0, y: 15, duration: 0.5 }, 5.4);
+    tl.from("#b2-headline", { opacity: 0, y: 30, duration: 0.8, ease: "power2.out" }, 5.6);
+    tl.from("#b2-desc", { opacity: 0, y: 20, duration: 0.6 }, 6.0);
+
+    // Exit Beat 2
+    tl.to("#beat2", { opacity: 0, y: -40, duration: 0.6, ease: "power2.in" }, 9.5);
+
+    // ==================== BEAT 3 (10.0s - 15.0s) ====================
+    tl.to("#beat3", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 10.2);
+
+    // Micro interactions inside 4-pane Studio Beat
+    tl.from(".studio-sidebar", { opacity: 0, x: -30, duration: 0.6 }, 10.6);
+    tl.from(".studio-chat", { opacity: 0, x: 30, duration: 0.6 }, 10.6);
+    tl.from("#canvas-glow", { opacity: 0, scale: 0.95, duration: 0.7 }, 10.8);
+    tl.from("#floating-chat", { opacity: 0, y: 20, scale: 0.97, duration: 0.5 }, 11.4);
+
+    // Exit Beat 3
+    tl.to("#beat3", { opacity: 0, y: -40, duration: 0.6, ease: "power2.in" }, 14.5);
+
+    // ==================== BEAT 4 (15.0s - 20.0s) ====================
+    tl.to("#beat4", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 15.2);
+
+    // Slide comparison cards inside Beat 4
+    tl.from("#b4-json", { opacity: 0, x: -50, duration: 0.7, ease: "power2.out" }, 15.5);
+    tl.from("#b4-arrow", { opacity: 0, scale: 0.5, duration: 0.4 }, 15.9);
+    tl.from("#b4-html", { opacity: 0, x: 50, duration: 0.7, ease: "power2.out" }, 16.1);
+    tl.from("#b4-badge", { opacity: 0, y: 15, duration: 0.5 }, 16.8);
+
+    // Exit Beat 4
+    tl.to("#beat4", { opacity: 0, y: -40, duration: 0.6, ease: "power2.in" }, 19.5);
+
+    // ==================== BEAT 5 (20.0s - 25.0s) ====================
+    tl.to("#beat5", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 20.2);
+
+    // Stagger Tech Badges spring inside Beat 5
+    tl.from(
+      "#b5-b1",
+      { opacity: 0, scale: 0.8, y: 15, duration: 0.4, ease: "back.out(1.5)" },
+      20.5,
+    );
+    tl.from(
+      "#b5-b2",
+      { opacity: 0, scale: 0.8, y: 15, duration: 0.4, ease: "back.out(1.5)" },
+      20.7,
+    );
+    tl.from(
+      "#b5-b3",
+      { opacity: 0, scale: 0.8, y: 15, duration: 0.4, ease: "back.out(1.5)" },
+      20.9,
+    );
+    tl.from(
+      "#b5-b4",
+      { opacity: 0, scale: 0.8, y: 15, duration: 0.4, ease: "back.out(1.5)" },
+      21.1,
+    );
+    tl.from(
+      "#b5-b5",
+      { opacity: 0, scale: 0.8, y: 15, duration: 0.4, ease: "back.out(1.5)" },
+      21.3,
+    );
+
+    // Vitest Green box popping in
+    tl.from("#b5-test-card", { opacity: 0, y: 30, duration: 0.6, ease: "power2.out" }, 21.8);
+
+    // Exit Beat 5
+    tl.to("#beat5", { opacity: 0, y: -40, duration: 0.6, ease: "power2.in" }, 24.5);
+
+    // ==================== BEAT 6 (25.0s - 30.0s) ====================
+    tl.to("#beat6", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 25.2);
+
+    // Final reveal inside Beat 6
+    tl.from("#b6-symbol", { opacity: 0, scale: 0.6, duration: 0.5, ease: "back.out(1.7)" }, 25.5);
+    tl.from("#b6-title", { opacity: 0, y: 20, duration: 0.6 }, 25.8);
+    tl.from("#b6-subtitle", { opacity: 0, y: 15, duration: 0.5 }, 26.1);
+    tl.from(
+      "#b6-btn",
+      { opacity: 0, scale: 0.9, y: 25, duration: 0.6, ease: "back.out(1.5)" },
+      26.5,
+    );
+    tl.from("#b6-footer", { opacity: 0, duration: 0.5 }, 27.2);
+
+    // Ambient background drift during entire video
+    tl.to(
+      "#bg-glow",
+      {
+        background:
+          "radial-gradient(circle at 40% 60%, rgba(79, 70, 229, 0.06) 0%, rgba(251, 250, 247, 0) 85%)",
+        duration: 30,
+        ease: "none",
+      },
+      0,
+    );
+
+    // Register with HyperFrames player
+    window.__timelines = window.__timelines || {};
+    window.__timelines["vibeframes-intro"] = tl;
+  </script>
+</div>
