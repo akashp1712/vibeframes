@@ -28,9 +28,7 @@ function PreviewEmptyState() {
           borderWidth={1}
         />
       </div>
-      <p className="text-sm font-medium text-foreground">
-        HyperFrames preview will render here.
-      </p>
+      <p className="text-sm font-medium text-foreground">HyperFrames preview will render here.</p>
       <p className="text-xs text-muted-foreground/60">
         Start a conversation to compose your first clip.
       </p>

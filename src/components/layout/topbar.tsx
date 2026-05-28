@@ -8,12 +8,21 @@ export function Topbar() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <Film className="size-5 text-primary" />
-          <span className="text-lg font-semibold tracking-tight">
-            VibeFrames
-          </span>
+          <span className="text-lg font-semibold tracking-tight">VibeFrames</span>
         </Link>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" nativeButton={false} render={<a href="https://github.com/akashp1712/vibeframes" target="_blank" rel="noopener noreferrer" />}>
+          <Button
+            variant="ghost"
+            size="sm"
+            nativeButton={false}
+            render={
+              <a
+                href="https://github.com/akashp1712/vibeframes"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+          >
             <Github data-icon="inline-start" />
             <span className="hidden sm:inline">GitHub</span>
           </Button>

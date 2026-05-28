@@ -17,13 +17,7 @@ interface ChatPanelProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export function ChatPanel({
-  messages,
-  input,
-  isLoading,
-  onInputChange,
-  onSubmit,
-}: ChatPanelProps) {
+export function ChatPanel({ messages, input, isLoading, onInputChange, onSubmit }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,11 +68,7 @@ export function ChatPanel({
             rows={1}
             className="min-h-9 flex-1 resize-none"
           />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={isLoading || !input.trim()}
-          >
+          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
             {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
           </Button>
         </form>
@@ -109,12 +99,8 @@ function ChatEmptyState() {
           borderWidth={1}
         />
       </div>
-      <p className="text-sm font-medium text-foreground">
-        Welcome to the Studio
-      </p>
-      <p className="text-xs text-muted-foreground">
-        Describe a video to get started.
-      </p>
+      <p className="text-sm font-medium text-foreground">Welcome to the Studio</p>
+      <p className="text-xs text-muted-foreground">Describe a video to get started.</p>
     </div>
   );
 }

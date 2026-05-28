@@ -9,8 +9,9 @@ import { PreviewPanel } from "@/components/studio/preview-panel";
 import { CodePanel } from "@/components/studio/code-panel";
 
 export default function StudioPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
-    useChat({ api: "/api/chat" });
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+    api: "/api/chat",
+  });
 
   useEffect(() => {
     if (error) toast.error(error.message || "Something went wrong");

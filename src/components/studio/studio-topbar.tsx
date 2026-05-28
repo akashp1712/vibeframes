@@ -21,9 +21,7 @@ export function StudioTopbar({ projectName = "Untitled Project" }: StudioTopbarP
           <span className="text-sm font-semibold">VibeFrames Studio</span>
         </div>
       </div>
-      <AnimatedShinyText className="text-xs">
-        {projectName}
-      </AnimatedShinyText>
+      <AnimatedShinyText className="text-xs">{projectName}</AnimatedShinyText>
     </header>
   );
 }

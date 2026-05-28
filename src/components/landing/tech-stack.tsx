@@ -27,12 +27,8 @@ export function TechStack() {
   return (
     <section className="w-full px-4 pb-24">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Built with
-        </h2>
-        <p className="mt-2 mb-8 text-sm text-muted-foreground">
-          Modern, composable, open-source.
-        </p>
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Built with</h2>
+        <p className="mt-2 mb-8 text-sm text-muted-foreground">Modern, composable, open-source.</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {stack.map((item) => (
             <Badge

@@ -10,15 +10,11 @@ describe("PreviewPanel", () => {
 
   it("renders the empty state message", () => {
     const { container } = render(<PreviewPanel />);
-    expect(container.textContent).toContain(
-      "HyperFrames preview will render here."
-    );
+    expect(container.textContent).toContain("HyperFrames preview will render here.");
   });
 
   it("renders the hint text", () => {
     const { container } = render(<PreviewPanel />);
-    expect(container.textContent).toContain(
-      "Start a conversation to compose your first clip."
-    );
+    expect(container.textContent).toContain("Start a conversation to compose your first clip.");
   });
 });

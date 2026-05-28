@@ -35,8 +35,6 @@ describe("ChatMessage", () => {
 
   it("renders assistant message content", () => {
     const { container } = render(<ChatMessage message={assistantMessage} />);
-    expect(container.textContent).toContain(
-      "I will create a title card with a fade-in."
-    );
+    expect(container.textContent).toContain("I will create a title card with a fade-in.");
   });
 });

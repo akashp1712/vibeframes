@@ -7,10 +7,5 @@ export type {
   Track,
   Clip,
 } from "./types";
-export {
-  HarnessStateSchema,
-  CompositionSchema,
-  TrackSchema,
-  ClipSchema,
-} from "./types";
+export { HarnessStateSchema, CompositionSchema, TrackSchema, ClipSchema } from "./types";
 export { addClipTool, updateClipTool, removeClipTool } from "./tools";

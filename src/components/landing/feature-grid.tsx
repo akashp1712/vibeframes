@@ -13,15 +13,13 @@ const features = [
   {
     icon: Layers,
     title: "HTML-Native Engine",
-    description:
-      "HyperFrames renders HTML into video. No proprietary timeline — just markup.",
+    description: "HyperFrames renders HTML into video. No proprietary timeline — just markup.",
     beamDelay: 2,
   },
   {
     icon: Sparkles,
     title: "Mastra Harness",
-    description:
-      "Typed state, modes, tools, skills, memory — a full agent runtime in one class.",
+    description: "Typed state, modes, tools, skills, memory — a full agent runtime in one class.",
     beamDelay: 4,
   },
 ];
@@ -41,9 +39,7 @@ export function FeatureGrid() {
             <CardTitle className="text-sm">{feature.title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {feature.description}
-            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
           </CardContent>
           <BorderBeam
             size={120}

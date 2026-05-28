@@ -44,3 +44,6 @@ next-env.d.ts
 experiments/**/node_modules/
 experiments/**/dist/
 experiments/**/.next/
+
+# agent skills local cache
+.agents/

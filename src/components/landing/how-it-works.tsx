@@ -34,12 +34,8 @@ export function HowItWorks() {
     <section className="w-full px-4 pb-24">
       <div className="mx-auto max-w-4xl">
         <div className="mb-10 text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            How it works
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Four steps from idea to video.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How it works</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Four steps from idea to video.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -56,9 +52,7 @@ export function HowItWorks() {
                   <item.icon className="size-5" />
                 </div>
                 <h3 className="text-sm font-semibold">{item.title}</h3>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  {item.description}
-                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{item.description}</p>
               </CardContent>
               <BorderBeam
                 size={80}

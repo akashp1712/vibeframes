@@ -95,11 +95,235 @@ Before writing a single line of application code, we designed every layer. The r
 *   **[HLD — tools & flows](./docs/05-hld-tools-flows.md):** Server-Sent Events protocol and composition pipeline.
 *   **[Tech stack](./docs/06-tech-stack.md):** Decisive structural choices and future upgrade plans.
 *   **[UI exploration](./docs/07-ui-system.md):** Typography, color-palettes, and canvas styling.
-*   
+
 *   **Architecture Decision Records (ADRs):**
     *   [ADR-001: SSE Chat Transport](./docs/decisions/ADR-001-sse-chat-transport.md)
     *   [ADR-002: LLM Provider Reasoning](./docs/decisions/ADR-002-llm-provider-reasoning.md)
     *   [ADR-003: Storage Strategy](./docs/decisions/ADR-003-storage-strategy.md)
+
+---
+
+## 📐 Core Architecture & Harness Agent Diagrams
+
+Here are the high-level design (HLD) diagrams and runtime structures illustrating how **VibeFrames** uses Mastra Harness, processes prompts, mutates states, and streams events back to your interface.
+
+### 1. Mastra Construct Stack & Harness Anatomy
+
+This diagram explains how Mastra's building blocks connect together under the hood—from the long-lived Project Harness container at the top down to the OpenAI `o4-mini` model at the bottom:
+
+```text
+  HOW MASTRA CONSTRUCTS CONNECT
+  ═════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                                                                     │
+  │                         ╔═══════════════╗                           │
+  │                         ║   HARNESS     ║  ← long-lived container   │
+  │                         ║               ║    per project            │
+  │                         ╚═══════╤═══════╝                           │
+  │                                 │                                   │
+  │                   ┌─────────────┼─────────────┐                     │
+  │                   │             │             │                     │
+  │                   ▼             ▼             ▼                     │
+  │            ╔════════════╗ ╔══════════╗ ╔════════════╗               │
+  │            ║   MODES    ║ ║  STATE   ║ ║  MEMORY    ║               │
+  │            ║            ║ ║  (Zod)   ║ ║  + STORAGE ║               │
+  │            ╚═════╤══════╝ ╚══════════╝ ╚════════════╝               │
+  │                  │                                                  │
+  │         ┌────────┴────────┐                                         │
+  │         │                 │                                         │
+  │         ▼                 ▼                                         │
+  │  ╔════════════╗    ╔════════════╗                                   │
+  │  ║ MODE:plan  ║    ║ MODE:vibe  ║   ← swap agent behavior          │
+  │  ║            ║    ║            ║     without rebuilding             │
+  │  ╚═════╤══════╝    ╚═════╤══════╝                                   │
+  │        │                 │                                          │
+  │        ▼                 ▼                                          │
+  │  ╔════════════╗    ╔════════════╗                                   │
+  │  ║   AGENT    ║    ║   AGENT    ║   ← wraps model + instructions    │
+  │  ║  Planner   ║    ║  Composer  ║     + tools                       │
+  │  ╚═════╤══════╝    ╚═════╤══════╝                                   │
+  │        │                 │                                          │
+  │        │     ┌───────────┤                                          │
+  │        │     │           │                                          │
+  │        ▼     ▼           ▼                                          │
+  │  ╔══════════╗     ╔════════════╗                                    │
+  │  ║  TOOLS   ║     ║   SKILLS   ║   ← tools = actions               │
+  │  ║ (Zod in/ ║     ║  (loaded   ║     skills = knowledge             │
+  │  ║  out)    ║     ║   on       ║                                    │
+  │  ╚════╤═════╝     ║   demand)  ║                                    │
+  │       │           ╚════════════╝                                    │
+  │       ▼                                                             │
+  │  ╔══════════════════════╗                                           │
+  │  ║    AI SDK CORE       ║   ← unified LLM interface                 │
+  │  ║  generateText()      ║     (provider-agnostic)                   │
+  │  ║  streamText()        ║                                           │
+  │  ╚══════════╤═══════════╝                                           │
+  │             │                                                       │
+  │             ▼                                                       │
+  │  ╔══════════════════════╗                                           │
+  │  ║    LLM PROVIDER      ║   ← OpenAI o4-mini                       │
+  │  ║  @ai-sdk/openai      ║     (swappable to any provider)           │
+  │  ╚══════════════════════╝                                           │
+  │                                                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+```
+
+The concrete runtime anatomy of a single project's **VibeFrames Harness** instance is structured as follows:
+
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│               VibeFrames Harness (per project)                    │
+│                                                                   │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │
+│  │      STATE       │  │     STORAGE      │  │     MEMORY     │  │
+│  │                  │  │                  │  │                │  │
+│  │  projectId       │  │  LibSQLStore     │  │  lastMessages  │  │
+│  │  composition     │  │  (file:local.db) │  │  : 20          │  │
+│  │  selection       │  │                  │  │                │  │
+│  │  projectMeta     │  │  threads         │  │  OM: deferred  │  │
+│  │  renderStatus    │  │  messages        │  │                │  │
+│  │  yolo: true      │  │  state snapshots │  │  semantic:     │  │
+│  └──────────────────┘  └──────────────────┘  │  deferred      │  │
+│                                              └────────────────┘  │
+│                                                                   │
+│  ┌─────────────────────────────────┐┌───────────────────────────┐ │
+│  │   MODE: "plan" (default)        ││   MODE: "vibe"             │ │
+│  │                                 ││                           │ │
+│  │   Agent: Planner                ││   Agent: Composer          │ │
+│  │   Model: o4-mini (low effort)   ││   Model: o4-mini (medium)  │ │
+│  │   instructions: buildPlan-      ││   instructions: buildVibe- │ │
+│  │     nerPrompt(state)            ││     Prompt(state)          │ │
+│  │   tools: contextTools ONLY      ││   tools: ALL tools         │ │
+│  │                                 ││                           │ │
+│  │   PURPOSE: think, propose plan  ││   PURPOSE: execute plan    │ │
+│  │   OUTPUT: structured plan card  ││   OUTPUT: composition      │ │
+│  │     (user approves → vibe)      ││     mutations + response   │ │
+│  └─────────────────────────────────┘└───────────────────────────┘ │
+│                                                                   │
+│  ┌──────────────────────────┐  ┌────────────────────────────────┐ │
+│  │       WORKSPACE          │  │          EVENT BUS             │ │
+│  │                          │  │                                │ │
+│  │   skills/                │  │  agent.thinking                │ │
+│  │   ├── hyperframes/       │  │  agent.responding              │ │
+│  │   ├── composition/       │  │  tool.calling                  │ │
+│  │   ├── captions/          │  │  tool.result                   │ │
+│  │   └── audio/             │  │  composition.delta             │ │
+│  │                          │  │  run.complete                  │ │
+│  │                          │  │  run.error                    │ │
+│  └──────────────────────────┘  └────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 2. End-to-End Core Request Flow
+
+This diagram traces one user message turn through the server routes, into the Harness's active Mode, through LLM reasoning, state updates via mutation tools, and finally back to the browser:
+
+```text
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  USER                                                                │
+  │  "make the title clip 2 seconds longer"                              │
+  │  [selection: { clipId: "title-1", intent: "edit" }]                  │
+  └────────────┬─────────────────────────────────────────────────────────┘
+               │
+               │  POST /api/chat
+               ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  ROUTE HANDLER                                                       │
+  │                                                                      │
+  │  1. getOrCreateHarness("proj-1")        ← cache hit                  │
+  │  2. harness.setState({ selection })     ← inject selection           │
+  │  3. harness.subscribe(events → SSE)     ← wire event stream          │
+  │  4. harness.sendMessage({ content })    ← start agent turn           │
+  └────────────┬─────────────────────────────────────────────────────────┘
+               │
+               ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  HARNESS → MODE → AGENT                                             │
+  │                                                                      │
+  │  instructions(state):                                                │
+  │    "You are Composer. Project: proj-1.                               │
+  │     Composition: 3 clips, 15s.                                       │
+  │     Selection: title-1 (intent: edit).                               │
+  │     Use tools to modify."                                            │
+  │                                                                      │
+  │  ┌─ LLM Reasoning ──────────────────────────────────────────────┐   │
+  │  │  User wants title clip longer by 2s.                         │   │
+  │  │  Current: title-1 duration=4s. New: 6s.                      │   │
+  │  │  Plan: get-composition → update-clip → validate.             │   │
+  │  └──────────────────────────────────────────────────────────────┘   │
+  │                                                                      │
+  │  Tool calls:                                                         │
+  │    ① get-composition({})            → reads state.composition        │
+  │    ② update-clip({ clipId, dur })   → mutates tree, emits delta     │
+  │    ③ validate-composition({})       → pure validation, no mutation   │
+  │                                                                      │
+  │  Final text: "Done — I extended the title clip to 6 seconds."        │
+  └────────────┬─────────────────────────────────────────────────────────┘
+               │
+               │  SSE events stream back
+               ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  CLIENT                                                              │
+  │                                                                      │
+  │  Chat panel:     thinking → tool cards → response text               │
+  │  Preview:        re-rendered on composition.delta                     │
+  │  Timeline:       title-1 bar extended to 6s                          │
+  │  Properties:     duration field updated to 6                         │
+  └──────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 3. Server-Sent Events (SSE) Client-Server Communication Protocol
+
+To ensure seamless, interactive updates without full page reloads or polling, VibeFrames implements a one-way event stream using Server-Sent Events (SSE):
+
+```text
+    ┌──────────┐                              ┌──────────────┐
+    │  Client  │                              │    Server     │
+    │  (React) │                              │  (Next.js)   │
+    └────┬─────┘                              └──────┬───────┘
+         │                                           │
+         │  POST /api/chat                           │
+         │  { projectId, prompt, threadId,           │
+         │    selection? }                           │
+         │ ─────────────────────────────────────────►│
+         │                                           │
+         │                              getOrCreateHarness(projectId)
+         │                              harness.setState({ selection })
+         │                              harness.subscribe(event => write)
+         │                              harness.sendMessage({ content })
+         │                                           │
+         │  HTTP 200  Content-Type: text/event-stream│
+         │◄──────────────────────────────────────────│
+         │                                           │
+         │  event: agent.thinking                    │
+         │  data: { }                                │
+         │◄──────────────────────────────────────────│
+         │                                           │
+         │  event: tool.calling                      │
+         │  data: { toolName, args }                 │
+         │◄──────────────────────────────────────────│
+         │                                           │
+         │  event: composition.delta                 │
+         │  data: { op, path, value }                │
+         │◄──────────────────────────────────────────│
+         │                                           │
+         │  event: agent.responding                  │
+         │  data: { text: "Done — I added..." }      │
+         │◄──────────────────────────────────────────│
+         │                                           │
+         │  event: run.complete                      │
+         │  data: { message, usage }                 │
+         │◄──────────────────────────────────────────│
+         │                                           │
+     ┌───┴──────┐                              ┌─────┴──────┐
+     │  Client  │                              │    Server  │
+     └──────────┘                              └────────────┘
+```
 
 ---
 

@@ -24,8 +24,7 @@ export function Hero() {
         </h1>
 
         <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
-          You describe what you want. The agent reasons, calls tools, and
-          builds a{" "}
+          You describe what you want. The agent reasons, calls tools, and builds a{" "}
           <a
             href="https://github.com/heygen-com/hyperframes"
             target="_blank"
@@ -34,8 +33,7 @@ export function Hero() {
           >
             HyperFrames
           </a>{" "}
-          composition — clip by clip, track by track — while you watch in
-          real time.
+          composition — clip by clip, track by track — while you watch in real time.
         </p>
 
         <div className="flex items-center gap-3 pt-2">
@@ -55,9 +53,7 @@ export function Hero() {
             variant="outline"
             size="lg"
             nativeButton={false}
-            render={
-              <a href="https://github.com/akashp1712/vibeframes/tree/main/docs" />
-            }
+            render={<a href="https://github.com/akashp1712/vibeframes/tree/main/docs" />}
           >
             Read the Docs
           </Button>
