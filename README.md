@@ -8,7 +8,7 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Framework: Next.js](https://img.shields.io/badge/Framework-Next.js%2015-black.svg?style=flat&logo=next.js)](https://nextjs.org)
+[![Framework: Next.js](https://img.shields.io/badge/Framework-Next.js%2016-black.svg?style=flat&logo=next.js)](https://nextjs.org)
 [![Engine: HyperFrames](https://img.shields.io/badge/Engine-HyperFrames-violet.svg)](https://github.com/heygen-com/hyperframes)
 [![Agent: Mastra](https://img.shields.io/badge/Agent-Mastra%20Harness-cyan.svg)](https://mastra.ai)
 
@@ -51,9 +51,9 @@ By pairing the reasoning capabilities of state-of-the-art LLMs with a robust, de
 | **Agent Runtime** | [Mastra](https://mastra.ai) Harness | Multi-mode reasoning, unified state, typed toolkits, and an integrated event bus out of the box. |
 | **Video Engine** | [HyperFrames](https://github.com/heygen-com/hyperframes) | HTML-native, deterministic, and highly structural—ideal for AI-driven generation. |
 | **Model** | OpenAI `o4-mini` via [AI SDK](https://sdk.vercel.ai) | Blazing fast reasoning and excellent structure-following at low cost. |
-| **Framework** | Next.js 15 (App Router) | Server-Sent Events (SSE) route handlers, Server Components, and smooth reactivity. |
-| **Storage** | LibSQL / SQLite | Zero-config local persistence that survives restarts and easily scales to PG when needed. |
-| **UI Styling** | shadcn/ui + Tailwind CSS | Highly customized dark-mode aesthetic with clean micro-animations. |
+| **Framework** | Next.js 16 (App Router), React 19 | Server-Sent Events (SSE) route handlers, Server Components, and smooth reactivity. |
+| **Testing** | Vitest + React Testing Library | TDD workflow — tests are the spec, written before implementation. |
+| **UI Styling** | shadcn/ui (base-nova) + Tailwind v4 + MagicUI | Light-mode-first aesthetic with shimmer, border-beam, and shiny-text micro-animations. |
 
 ---
 
@@ -73,9 +73,9 @@ VibeFrames is structured around a rigorous design-first lifecycle. All core arch
   ✅  M7: UI/UX system design (Dark theme palettes, wireframes)
 
   BUILD PHASE  ───────────────────────────────────────────
-  ⏳  M8: Core Scaffold & HelloWorld Experiment        👈 [We are here]
-  ⬜  M9: Harness Loop End-to-End Integration
-  ⬜  M10: Full Interactive Editor + Canvas + Tool Suite
+  ✅  M8: Core Scaffold, Studio UI & TDD Foundation    👈 [Just shipped]
+  ⏳  M9: Harness Loop End-to-End Integration
+  ⬜  M10: Full Interactive Studio + Canvas + Tool Suite
   ⬜  M11: Persistence, Project Management & Auth
   ⬜  M12: Performance Polish, Micro-animations & Dev Deploy
   ⬜  M13: Production Launch
@@ -103,25 +103,29 @@ Before writing a single line of application code, we designed every layer. The r
 
 ---
 
-## ⚡ Quick Start (Exploring Docs)
+## ⚡ Quick Start
 
-The MVP code implementation starts in **Milestone 8**. In the meantime, you can explore the entire design system and specs:
+```bash
+git clone https://github.com/akashp1712/vibeframes.git
+cd vibeframes
+pnpm install
+cp .env.example .env.local   # add your OPENAI_API_KEY
+pnpm dev                      # → http://localhost:3000
+```
 
-1. **Clone the Repo:**
-   ```bash
-   git clone https://github.com/akashp1712/vibeframes.git
-   cd vibeframes
-   ```
+See **[DEVELOPMENT.md](./DEVELOPMENT.md)** for full local development guidelines.
 
-2. **Check out the Architecture:**
-   Simply open [`docs/README.md`](./docs/README.md) or browse the markdown files in your favorite reader.
+### Run tests
 
-3. **Install dependencies** (Available at M8/M9 scaffold):
-   ```bash
-   pnpm install
-   echo "OPENAI_API_KEY=sk-..." > .env.local
-   pnpm dev
-   ```
+```bash
+pnpm test          # single run
+pnpm test:watch    # watch mode
+pnpm typecheck     # type-check without emit
+```
+
+### Explore the architecture
+
+Open [`docs/README.md`](./docs/README.md) for the full design system and specs.
 
 ---
 

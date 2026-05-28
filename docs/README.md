@@ -36,10 +36,17 @@
 | [ADR-003](./decisions/ADR-003-storage-strategy.md) | Storage: all-local MVP → PgStore later |
 | ADR-004 | UI component stack (proposed in doc 07, confirmed at M8) |
 
+## Low-Level Designs
+
+| LLD | Topic |
+|---|---|
+| [LLD-01](./lld/lld-01-app-structure.md) | App structure — folder conventions, import rules, test structure |
+| [LLD-02](./lld/lld-02-composition-model.md) | Composition model — types, mutations, serialization, clip registry |
+
 ## Sub-folders
 
 - **[`decisions/`](./decisions/)** — Architecture Decision Records. Short, dated, status-tracked.
-- **[`lld/`](./lld/)** — Low-level designs. One per subsystem, written when the subsystem is non-trivial. Coming in M8+.
+- **[`lld/`](./lld/)** — Low-level designs. One per subsystem, written when the subsystem is non-trivial.
 - **[`journal/`](./journal/)** — One entry per work session. The build-in-public log.
 - **[`meta/`](./meta/)** — Build plan and execution protocol. How the project is structured and sequenced.
 
@@ -57,9 +64,9 @@ docs-only ┐
           └  M7  UI system                         ✅
 
 code      ┐
-          │  M8  Scaffold + HelloWorld             ← next up
-          │  M9  Harness loop end-to-end
-          │  M10 Full editor + tools + chat
+          │  M8  Scaffold + Studio UI + LLDs       ✅
+          │  M9  Harness loop end-to-end            ← next up
+          │  M10 Full Studio + tools + chat
           │  M11 Persistence + auth
           │  M12 Polish + deploy
           └  M13 Launch
