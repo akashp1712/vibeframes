@@ -58,8 +58,8 @@ export function HowItWorks() {
                 size={80}
                 duration={10}
                 delay={i * 2.5}
-                colorFrom="oklch(0.55 0.22 264)"
-                colorTo="oklch(0.65 0.18 300)"
+                colorFrom="oklch(0.5 0.005 240)"
+                colorTo="oklch(0.85 0.002 240)"
                 borderWidth={1}
               />
             </Card>

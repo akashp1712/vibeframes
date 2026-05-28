@@ -76,8 +76,8 @@ export function ChatPanel({ messages, input, isLoading, onInputChange, onSubmit 
           <BorderBeam
             size={80}
             duration={3}
-            colorFrom="oklch(0.55 0.22 264)"
-            colorTo="oklch(0.65 0.18 300)"
+            colorFrom="oklch(0.5 0.005 240)"
+            colorTo="oklch(0.85 0.002 240)"
             borderWidth={2}
           />
         )}
@@ -94,8 +94,8 @@ function ChatEmptyState() {
         <BorderBeam
           size={40}
           duration={6}
-          colorFrom="oklch(0.55 0.22 264)"
-          colorTo="oklch(0.65 0.18 300)"
+          colorFrom="oklch(0.5 0.005 240)"
+          colorTo="oklch(0.85 0.002 240)"
           borderWidth={1}
         />
       </div>
