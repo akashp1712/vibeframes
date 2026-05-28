@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquare, Layers, Sparkles, Terminal, Play, CheckCircle2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { useEffect, useState } from "react";
 
@@ -96,19 +96,19 @@ export function FeatureGrid() {
           <div className="mx-5 mb-5 grid grid-cols-2 gap-2 rounded-xl border border-stone-200/60 bg-stone-950 p-3.5 font-mono text-[9px] text-stone-400 select-none dark:border-stone-800/80">
             {/* JSON side */}
             <div className="flex flex-col gap-1 border-r border-stone-800 pr-2">
-              <span className="text-stone-600">// AST Node</span>
+              <span className="text-stone-600">{/* AST Node */}</span>
               <span className="text-indigo-400 font-semibold">&#123;</span>
-              <span className="pl-2 text-stone-300">type: <span className="text-emerald-400">"text"</span>,</span>
+              <span className="pl-2 text-stone-300">type: <span className="text-emerald-400">&quot;text&quot;</span>,</span>
               <span className="pl-2 text-stone-300">start: <span className="text-amber-400">0.0</span>,</span>
               <span className="pl-2 text-stone-300">duration: <span className="text-amber-400">5.0</span></span>
               <span className="text-indigo-400 font-semibold">&#125;</span>
             </div>
             {/* HTML side */}
             <div className="flex flex-col justify-center pl-2">
-              <span className="text-stone-600">// HTML Output</span>
-              <span className="text-stone-500">&lt;<span className="text-sky-400">div</span></span>
-              <span className="pl-2 text-stone-300">data-start=<span className="text-emerald-400">"0"</span></span>
-              <span className="pl-2 text-stone-300">data-dur=<span className="text-emerald-400">"5"</span></span>
+              <span className="text-stone-600">{/* HTML Output */}</span>
+              <span className="text-stone-500">&lt;<span className="text-sky-400">div</span>&gt;</span>
+                <span className="pl-2 text-stone-300" data-start="&quot;0&quot;"></span>
+                <span className="pl-2 text-stone-300" data-dur="&quot;5&quot;"></span>
               <span className="text-stone-500">&gt;...&lt;/<span className="text-sky-400">div</span>&gt;</span>
             </div>
           </div>
@@ -158,7 +158,7 @@ export function FeatureGrid() {
               <span>
                 harness.execute(
                 <span className="font-semibold text-stone-700 dark:text-stone-300">
-                  "{["add-clip", "update-clip", "remove-clip", "validate"][activeTool]}"
+                    {["add-clip", "update-clip", "remove-clip", "validate"][activeTool]}
                 </span>
                 )
               </span>
