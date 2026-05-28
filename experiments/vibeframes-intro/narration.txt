@@ -1,0 +1,6 @@
+Traditional video editing is slow, tedious, and click-heavy. What if you could build videos through pure conversation?
+Meet VibeFrames—a conversational agent studio where you vibe and describe, and the AI handles the timeline.
+Behind the scenes, a custom Mastra Harness plans, validates, and triggers typed tools to construct the canvas.
+Every change mutates a canonical composition tree, driving an HTML-native rendering engine with total determinism.
+Built for developers with Next dot J S sixteen, React nineteen, Tailwind v four, and Vitest T D D. The code is your video.
+Ready to change how you create? Open the Studio and start composing today.
