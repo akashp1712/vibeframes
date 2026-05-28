@@ -73,7 +73,7 @@ try {
   for (let i = 0; i < times.length; i++) {
     const t = times[i];
     const { buffer: pngBuf } = await captureFrameToBuffer(session, i, t);
-    const elements = await probeTextElements(session, t);
+    const elements = await probeTextElements(session);
     const annotated = await annotateFrame(pngBuf, elements);
     overlayFrames.push({ t, png: annotated });
     for (const el of elements) allEntries.push({ time: t, ...el });
@@ -101,7 +101,7 @@ try {
 
 // ─── DOM probe (runs in the page) ────────────────────────────────────────────
 
-async function probeTextElements(session, _t) {
+async function probeTextElements(session) {
   // `session.page` is the Puppeteer Page owned by the capture session.
   // We pass a pure function to `evaluate`: it walks the DOM and returns
   // enough info for us to compute a ratio in Node using the frame buffer.
