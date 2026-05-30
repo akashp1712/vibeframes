@@ -8,13 +8,13 @@ describe("HowItWorks", () => {
     expect(screen.getByText("How it works")).toBeInTheDocument();
   });
 
-  it("renders all four steps", () => {
+  it("renders all three steps", () => {
     const { container } = render(<HowItWorks />);
     const text = container.textContent ?? "";
     expect(text).toContain("Describe");
-    expect(text).toContain("Reason");
     expect(text).toContain("Compose");
     expect(text).toContain("Preview");
+    expect(text).not.toContain("Reason");
   });
 
   it("renders step descriptions", () => {

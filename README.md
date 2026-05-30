@@ -79,8 +79,8 @@ VibeFrames is structured around a rigorous design-first lifecycle. All core arch
   ✅  M7: UI/UX system design (Dark theme palettes, wireframes)
 
   BUILD PHASE  ───────────────────────────────────────────
-  ✅  M8: Core Scaffold, Studio UI & TDD Foundation    👈 [Just shipped]
-  ⏳  M9: Harness Loop End-to-End Integration
+  ✅  M8: Core Scaffold, Studio UI & TDD Foundation
+  ✅  M9: Harness Loop End-to-End Integration            👈 [Just shipped]
   ⬜  M10: Full Interactive Studio + Canvas + Tool Suite
   ⬜  M11: Persistence, Project Management & Auth
   ⬜  M12: Performance Polish, Micro-animations & Dev Deploy
@@ -335,12 +335,30 @@ To ensure seamless, interactive updates without full page reloads or polling, Vi
 
 ## ⚡ Quick Start
 
+**The only required env var is `OPENAI_API_KEY`.** Everything else — model,
+storage, data directory — has a working default.
+
 ```bash
 git clone https://github.com/akashp1712/vibeframes.git
 cd vibeframes
 pnpm install
 cp .env.example .env.local   # add your OPENAI_API_KEY
 pnpm dev                      # → http://localhost:3000
+```
+
+On first prompt VibeFrames creates `./.data/vibeframes.db` (LibSQL file) for
+threads/messages and writes per-project composition snapshots to
+`./.data/compositions/*.json`. Refresh the page — your timeline is still
+there. Both paths are gitignored.
+
+### Swap storage for serverless
+
+File-backed LibSQL won't survive Vercel's ephemeral filesystem. Point to
+[Turso](https://turso.tech) in `.env.local`:
+
+```bash
+VIBEFRAMES_DB_URL=libsql://your-db-name.turso.io
+VIBEFRAMES_DB_AUTH_TOKEN=...
 ```
 
 See **[DEVELOPMENT.md](./DEVELOPMENT.md)** for full local development guidelines.

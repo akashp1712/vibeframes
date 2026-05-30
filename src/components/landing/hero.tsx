@@ -20,28 +20,28 @@ export function Hero() {
       />
 
       <div className="flex max-w-2xl flex-col items-center gap-4 pt-12 pb-6 text-center">
-        <div className="flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/30 px-3.5 py-1 shadow-3xs dark:border-blue-950/20 dark:bg-blue-950/10">
-          <Sparkles className="size-3 text-blue-600 dark:text-blue-400 animate-pulse" />
-          <AnimatedShinyText className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            docs-first, now code
+        <div className="flex items-center gap-2 rounded-full border border-orange-200/70 bg-orange-50/60 px-3.5 py-1 shadow-3xs">
+          <Sparkles className="size-3 text-orange-700 animate-pulse" />
+          <AnimatedShinyText className="text-xs font-semibold text-slate-700">
+            alpha · chat-first video editor
           </AnimatedShinyText>
         </div>
 
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-slate-900 dark:text-slate-50 leading-tight">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-slate-900 leading-tight">
           Compose videos
           <br />
-          <span className="bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-sky-300">
+          <span className="bg-gradient-to-r from-stone-900 via-stone-800 to-orange-700 bg-clip-text text-transparent">
             through conversation.
           </span>
         </h1>
 
-        <p className="max-w-lg text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400 font-sans">
+        <p className="max-w-lg text-sm sm:text-base leading-relaxed text-slate-600 font-sans">
           You describe what you want. The agent reasons, calls tools, and builds a{" "}
           <a
             href="https://github.com/heygen-com/hyperframes"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-blue-600 hover:text-blue-700 underline decoration-blue-200 hover:decoration-blue-500 underline-offset-2 transition-all"
+            className="font-semibold text-stone-900 hover:text-stone-700 underline decoration-orange-300 hover:decoration-orange-500 decoration-2 underline-offset-2 transition-all"
           >
             HyperFrames
           </a>{" "}
@@ -65,9 +65,9 @@ export function Hero() {
             variant="outline"
             size="lg"
             nativeButton={false}
-            render={<a href="https://github.com/akashp1712/vibeframes/tree/main/docs" />}
+            render={<a href="#engineering" />}
           >
-            Read the Docs
+            See the engineering
           </Button>
         </div>
       </div>

@@ -78,3 +78,40 @@ UI transitions and animations inside the video canvas follow physical, snappily 
 *   **Snappy Decelerations**: Standard micro-interactions use swift, snappy ease curves (`ease-out` in CSS or `power4.out` in GSAP).
 *   **Weighted springs**: Exclusively reserved for popping badges (`back.out(1.4)`).
 *   **SFX Triggers**: Paired with typewriter taps (`typing.mp3`), tool clicks (`click-soft.mp3`), and high-end crystalline chime alerts (`chime.mp3`) for satisfying tactile feedback.
+
+---
+
+## 🙏 Credits & Inspiration
+
+VibeFrames' visual identity stands on the shoulders of work by others. None of the
+following implies endorsement by, or partnership with, any of the named parties —
+this section exists for transparency and gratitude.
+
+### Typography
+* **[Geist Sans](https://vercel.com/font) + [Geist Mono](https://vercel.com/font)** — by Vercel, Inc.
+  Licensed under the [SIL Open Font License v1.1](https://github.com/vercel/geist-font/blob/main/LICENSE.TXT).
+  Used unmodified, with the "Geist" Reserved Font Name preserved per OFL §3.
+  Vercel® is a trademark of Vercel, Inc. — we use only the open-source font, not
+  the trademark or brand.
+
+### Design inspiration
+* **[hellointerview.com](https://www.hellointerview.com)** — for the editorial,
+  unrushed, deep-navy-on-paper sensibility that informs our **Soothing Ocean
+  Slate** palette and spacious layout discipline.
+* **[meta.com](https://about.meta.com)** — for the calm corporate-but-warm
+  geometric type usage and content-first information density.
+* **[Vercel's product surfaces](https://vercel.com)** — for the soft-pill button
+  geometry, generous whitespace, and "flat surfaces over heavy shadows"
+  philosophy reflected in our component shape language.
+
+### What this means
+Design tokens (color hex values, font sizes, spacing scales, border radii) are
+facts and **not copyrightable**. Adoption of conventions like "Geist body text,
+pill primary buttons, light editorial spacing" reflects modern product-design
+common practice across many sites and is freely usable. Our prose, color
+*combinations*, naming ("Soothing Ocean Slate", "Misty Sky", etc.), and overall
+expression are original to VibeFrames.
+
+If you build on top of VibeFrames, you inherit our [MIT License](./LICENSE) for
+the code; for the Geist fonts, you inherit the [OFL 1.1](https://github.com/vercel/geist-font/blob/main/LICENSE.TXT)
+terms directly from Vercel.

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>VibeFrames • Vercel AI Gateway Intro (animated)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    body { margin: 0; padding: 24px; background: #fafafa; font-family: ui-sans-serif, system-ui; color: #171717; }
+    h1.page-title { font-size: 14px; color: #525252; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+    .stage {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      transform-origin: top left;
+      transform: scale(0.5);
+      background: #000;
+      overflow: hidden;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+    }
+    .stage-wrap { width: 960px; height: 540px; margin-bottom: 16px; }
+    .clip { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+    .controls { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+    .controls button { padding: 6px 14px; background: #171717; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .controls .time { font-family: ui-monospace, SF Mono, monospace; font-size: 13px; color: #525252; min-width: 80px; }
+    .controls input[type=range] { flex: 1; max-width: 400px; }
+  </style>
+</head>
+<body>
+  <h1 class="page-title">VibeFrames Player · vercel-intro · GSAP timeline · 1920×1080 @ 50%</h1>
+  <div class="stage-wrap">
+    <div class="stage">
+      <div id="root" data-composition-id="comp-k0z4ut1k" data-width="1920" data-height="1080">
+        <div data-clip-id="clip-bg" class="clip" data-start="0" data-duration="6" data-track-index="0">
+          <div class="bg-black w-full h-full"></div>
+        </div>
+        <div data-clip-id="clip-heading" class="clip" data-start="0.4" data-duration="5.4" data-track-index="1">
+          <div class="flex items-center flex-col h-full justify-center gap-6">
+            <svg width="64" height="56" viewBox="0 0 76 65" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M37.5274 0L75.0548 65H0L37.5274 0Z"/></svg>
+            <h1 class="text-white text-7xl font-bold tracking-tight">AI Gateway</h1>
+          </div>
+        </div>
+        <div data-clip-id="clip-subtitle" class="clip" data-start="1.2" data-duration="4.6" data-track-index="2">
+          <div class="flex items-center flex-col h-full justify-end pb-32">
+            <h2 class="text-gray-400 text-3xl tracking-wide">One API. Every Model.</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="play">▶ Play</button>
+    <button id="pause">⏸ Pause</button>
+    <button id="restart">↻ Restart</button>
+    <span class="time" id="time">0.0s / 6.0s</span>
+    <input type="range" id="scrub" min="0" max="6" step="0.01" value="0" />
+  </div>
+
+  <p style="font-size:13px;color:#737373;margin-top:24px;">
+    3 clips · 3 tracks · 6s duration · animation timing driven by GSAP from <code>data-start</code> / <code>data-duration</code>
+  </p>
+
+  <script>
+    const tl = gsap.timeline({ paused: true, onUpdate: updateTime });
+    const stage = document.querySelector('#root');
+    const clips = stage.querySelectorAll('.clip');
+
+    clips.forEach(clip => {
+      const start = parseFloat(clip.dataset.start);
+      const duration = parseFloat(clip.dataset.duration);
+      tl.fromTo(clip,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' },
+        start
+      );
+      tl.to(clip,
+        { opacity: 0, duration: 0.4, ease: 'power2.in' },
+        start + duration - 0.4
+      );
+    });
+
+    const totalDuration = 6;
+    function updateTime() {
+      const t = tl.time();
+      document.getElementById('time').textContent = `${t.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
+      document.getElementById('scrub').value = t;
+    }
+
+    document.getElementById('play').onclick = () => tl.play();
+    document.getElementById('pause').onclick = () => tl.pause();
+    document.getElementById('restart').onclick = () => tl.restart();
+    document.getElementById('scrub').addEventListener('input', (e) => {
+      tl.pause();
+      tl.time(parseFloat(e.target.value));
+    });
+
+    // Autoplay
+    tl.play();
+  </script>
+</body>
+</html>

@@ -5,7 +5,8 @@ import { StudioTopbar } from "../studio-topbar";
 describe("StudioTopbar", () => {
   it("renders the studio brand", () => {
     const { container } = render(<StudioTopbar />);
-    expect(container.textContent).toContain("VibeFrames Studio");
+    expect(container.textContent).toContain("VibeFrames");
+    expect(container.textContent).toContain("Studio");
   });
 
   it("shows default project name", () => {

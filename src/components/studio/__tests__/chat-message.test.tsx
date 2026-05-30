@@ -1,20 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { ChatMessage } from "../chat-message";
-import type { UIMessage } from "ai";
+import type { ChatMessage as CustomChatMessage } from "@/harness/use-harness-chat";
 
-const userMessage: UIMessage = {
+const userMessage: CustomChatMessage = {
   id: "msg-1",
   role: "user",
   content: "Make a 5-second intro",
-  parts: [{ type: "text", text: "Make a 5-second intro" }],
 };
 
-const assistantMessage: UIMessage = {
+const assistantMessage: CustomChatMessage = {
   id: "msg-2",
   role: "assistant",
   content: "I will create a title card with a fade-in.",
-  parts: [{ type: "text", text: "I will create a title card with a fade-in." }],
 };
 
 describe("ChatMessage", () => {

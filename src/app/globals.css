@@ -2,101 +2,67 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* VibeFrames is light-mode only. The `dark:*` Tailwind variants left in
+   components are inert because no element ever carries a `.dark` class. */
 
 /* ── VibeFrames Design Tokens ─────────────────────────────────── */
 
 :root {
+  /* ── Palette: Grok-inspired Warm Paper ───────────────────────
+     Anchor:    warm cream paper + deep warm ink + solid black CTAs
+     Sprinkles: pale peach, butter, sage, lavender (used sparingly)
+     Hue family: warm (50–80), shifted away from blue/teal entirely
+     ──────────────────────────────────────────────────────────── */
+
   /* Surfaces */
-  --surface: #ffffff;
-  --surface-hover: #f8fafc;
-  --muted: oklch(0.96 0.005 240);
-  --muted-foreground: oklch(0.45 0.015 240);
+  --surface: #ffffff;                    /* pure white cards on cream canvas */
+  --surface-hover: #f7f5f1;              /* warm hover */
+  --muted: oklch(0.965 0.006 75);        /* warm stone */
+  --muted-foreground: oklch(0.5 0.01 60);
 
   /* Borders */
-  --border: oklch(0.92 0.008 240);
-  --border-hover: oklch(0.85 0.01 240);
-  --ring: oklch(0.6 0.18 240);
+  --border: oklch(0.92 0.005 70);        /* warm stone-200 */
+  --border-hover: oklch(0.85 0.008 65);
+  --ring: oklch(0.7 0.13 55);            /* warm amber focus ring */
 
-  /* Accent — Soothing Ocean Slate Blue */
-  --accent: oklch(0.965 0.015 240);
-  --accent-foreground: oklch(0.3 0.15 240);
-  --accent-hover: #dbeafe;
-  --accent-muted: #eff6ff;
+  /* Accent — Pale Peach */
+  --accent: oklch(0.955 0.025 65);
+  --accent-foreground: oklch(0.32 0.06 50);
+  --accent-hover: #fde7d3;               /* peach wash hover */
+  --accent-muted: #fdf4e7;               /* faint butter wash */
 
   /* Semantic */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --destructive: oklch(0.577 0.245 27.325);
+  --success: #65a986;                    /* muted sage */
+  --warning: #d9a441;                    /* warm amber */
+  --destructive: #dc6253;                /* warm coral */
 
   /* Radius */
-  --radius: 0.625rem;
-  --background: oklch(0.985 0.005 240);
-  --foreground: oklch(0.13 0.02 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.02 240);
-  --primary: oklch(0.45 0.22 240);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.955 0.01 240);
-  --secondary-foreground: oklch(0.3 0.1 240);
-  --input: oklch(0.92 0.008 240);
-  --chart-1: oklch(0.45 0.22 240);
-  --chart-2: oklch(0.55 0.18 240);
-  --chart-3: oklch(0.5 0.15 240);
-  --chart-4: oklch(0.6 0.2 240);
-  --chart-5: oklch(0.45 0.22 240);
-  --sidebar: oklch(0.985 0.005 240);
-  --sidebar-foreground: oklch(0.13 0.02 240);
-  --sidebar-primary: oklch(0.45 0.22 240);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.955 0.01 240);
-  --sidebar-accent-foreground: oklch(0.3 0.1 240);
-  --sidebar-border: oklch(0.92 0.008 240);
-  --sidebar-ring: oklch(0.6 0.18 240);
-}
+  --radius: 0.5rem;                      /* 8px default */
+  --background: oklch(0.985 0.006 75);   /* warm cream paper ≈ #fafaf6 */
+  --foreground: oklch(0.18 0.005 60);    /* deep warm ink ≈ #1a1916 */
+  --card: oklch(1 0 0);                  /* pure white card */
+  --card-foreground: oklch(0.18 0.005 60);
+  --primary: oklch(0.2 0.005 60);        /* warm ink black for CTAs ≈ #1f1d1a */
+  --primary-foreground: oklch(0.99 0.005 75);
+  --secondary: oklch(0.96 0.005 70);
+  --secondary-foreground: oklch(0.25 0.005 60);
+  --input: oklch(0.92 0.005 70);
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --surface: #18181b;
-  --surface-hover: #27272a;
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  /* Charts — curated warm-leaning pastels for data viz */
+  --chart-1: oklch(0.72 0.12 55);        /* peach/amber */
+  --chart-2: oklch(0.7 0.1 145);         /* sage */
+  --chart-3: oklch(0.7 0.11 295);        /* soft lavender */
+  --chart-4: oklch(0.78 0.13 95);        /* butter yellow */
+  --chart-5: oklch(0.65 0.14 25);        /* warm coral */
 
-  --border: oklch(1 0 0 / 10%);
-  --border-hover: #3f3f46;
-  --ring: oklch(0.556 0 0);
-
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --accent-hover: #27272a;
-  --accent-muted: rgba(244, 244, 245, 0.05);
-
-  --success: #22c55e;
-  --warning: #fbbf24;
-  --destructive: oklch(0.704 0.191 22.216);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --input: oklch(1 0 0 / 15%);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.985 0.006 75);
+  --sidebar-foreground: oklch(0.18 0.005 60);
+  --sidebar-primary: oklch(0.2 0.005 60);
+  --sidebar-primary-foreground: oklch(0.99 0.005 75);
+  --sidebar-accent: oklch(0.955 0.025 65);
+  --sidebar-accent-foreground: oklch(0.32 0.06 50);
+  --sidebar-border: oklch(0.92 0.005 70);
+  --sidebar-ring: oklch(0.7 0.13 55);
 }
 
 /* ── Tailwind v4 Theme ────────────────────────────────────────── */
@@ -155,6 +121,10 @@
   --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
   --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
   --animate-shiny-text: shiny-text 8s infinite;
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
   @keyframes shimmer-slide {
     to {
       transform: translate(calc(100cqw - 100%), 0);
@@ -199,8 +169,10 @@ body {
     sans-serif;
 }
 
-/* Smooth scrolling */
+/* Light-mode only — opt out of the OS dark-mode hint so native
+   widgets (scrollbars, form controls, autofill) stay light too. */
 html {
+  color-scheme: light;
   scroll-behavior: smooth;
 }
 
