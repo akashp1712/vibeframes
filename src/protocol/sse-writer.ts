@@ -14,7 +14,7 @@ export function createSSEStream() {
       controller.enqueue(new TextEncoder().encode(`id: ${event.seq}\n`));
       controller.enqueue(new TextEncoder().encode(`event: ${event.type}\n`));
       controller.enqueue(new TextEncoder().encode(`data: ${json}\n\n`));
-    } catch (e) {
+    } catch {
       // Ignore if closed
     }
   };
@@ -22,13 +22,13 @@ export function createSSEStream() {
   const writeHeartbeat = () => {
     try {
       controller.enqueue(new TextEncoder().encode(`event: heartbeat\ndata: {}\n\n`));
-    } catch (e) {}
+    } catch {}
   };
 
   const endStream = () => {
     try {
       controller.close();
-    } catch (e) {}
+    } catch {}
   };
 
   return { stream, writeEvent, writeHeartbeat, endStream };

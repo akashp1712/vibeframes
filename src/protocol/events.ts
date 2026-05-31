@@ -5,5 +5,5 @@ export interface VibeFramesEvent {
   projectId: string;
   ts: number;
   type: string;
-  payload: any;
+  payload: unknown;
 }

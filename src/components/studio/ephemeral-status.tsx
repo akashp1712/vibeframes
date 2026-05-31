@@ -36,8 +36,8 @@ export function EphemeralStatus({ status, activeToolName }: EphemeralStatusProps
   // Rotate thinking synonyms every 2.4s, only while in thinking state.
   useEffect(() => {
     if (status !== "thinking") {
-      setThinkingIdx(0);
-      return;
+      const id = setTimeout(() => setThinkingIdx(0), 0);
+      return () => clearTimeout(id);
     }
     const id = setInterval(() => {
       setThinkingIdx((i) => (i + 1) % THINKING_PHRASES.length);
@@ -50,8 +50,8 @@ export function EphemeralStatus({ status, activeToolName }: EphemeralStatusProps
   useEffect(() => {
     if (status === "idle" || status === "done") {
       if (pendingRef.current) clearTimeout(pendingRef.current);
-      setVisible(null);
-      return;
+      const id = setTimeout(() => setVisible(null), 0);
+      return () => clearTimeout(id);
     }
     const next = { status, phrase: pickPhrase(status, activeToolName, thinkingIdx) };
     if (visible && visible.phrase === next.phrase) return;
