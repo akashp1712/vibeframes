@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { DotPattern } from "@/components/ui/dot-pattern";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
-import { ChatMessage } from "./chat-message";
+import { ChatMessage } from "./message";
 import { cn } from "@/lib/utils";
 
 const SUGGESTED_PROMPTS = [

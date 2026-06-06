@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { StudioTopbar } from "../studio-topbar";
+import { StudioTopbar } from "../topbar";
 
 describe("StudioTopbar", () => {
   it("renders the studio brand", () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
-import { ChatPanel } from "../chat-panel";
+import { ChatPanel } from "../panel";
 
 /**
  * Regression: user reported "can't hit Enter or click Send button".
