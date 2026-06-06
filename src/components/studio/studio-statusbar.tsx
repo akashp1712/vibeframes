@@ -1,7 +1,7 @@
 "use client";
 
 import { Circle, Cpu, Film, Loader2, Sparkles, Wrench, Zap } from "lucide-react";
-import type { AgentStatus } from "@/harness/use-harness-chat";
+import type { AgentStatus } from "@/harness/react/use-harness-chat";
 import { cn } from "@/lib/utils";
 
 interface StudioStatusbarProps {

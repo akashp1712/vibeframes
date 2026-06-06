@@ -1,4 +1,4 @@
-import type { Composition, Clip, Track } from "./types";
+import type { Composition, Clip, Track } from "./schema";
 
 function generateId(prefix: string): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";

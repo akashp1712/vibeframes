@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChatMessage as CustomChatMessage, AgentStatus } from "@/harness/use-harness-chat";
+import type { ChatMessage as CustomChatMessage, AgentStatus } from "@/harness/react/use-harness-chat";
 import { Film, Send, Loader2, MessageSquare, Sparkles } from "lucide-react";
 import { EphemeralStatus } from "./ephemeral-status";
 import { useRef, useEffect, type FormEvent, type KeyboardEvent } from "react";

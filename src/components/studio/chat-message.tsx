@@ -1,4 +1,4 @@
-import type { ChatMessage as CustomChatMessage, ToolCall } from "@/harness/use-harness-chat";
+import type { ChatMessage as CustomChatMessage, ToolCall } from "@/harness/react/use-harness-chat";
 import { cn } from "@/lib/utils";
 import { toolNoun, toolVerb } from "@/lib/tool-labels";
 import { Check, X, Loader2, ChevronDown } from "lucide-react";

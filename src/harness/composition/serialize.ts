@@ -1,4 +1,4 @@
-import type { Composition } from "./types";
+import type { Composition } from "./schema";
 
 export function serialize(composition: Composition): string {
   const clipElements = composition.tracks.flatMap((track, trackIndex) =>

@@ -20,14 +20,14 @@ describe("composition-store (disk persistence)", () => {
   });
 
   it("creates an empty composition on first access", async () => {
-    const store = await import("../composition-store");
+    const store = await import("../store");
     const comp = store.getComposition("proj-a");
     expect(comp.tracks).toEqual([]);
     expect(comp.id).toMatch(/^comp-/);
   });
 
   it("write-through to disk on setComposition", async () => {
-    const store = await import("../composition-store");
+    const store = await import("../store");
     const { addClip } = await import("../mutations");
     const c1 = store.getComposition("proj-b");
     const updated = addClip(c1, {
@@ -46,7 +46,7 @@ describe("composition-store (disk persistence)", () => {
 
   it("hydrates from disk in a fresh module load", async () => {
     // first module instance: write
-    const first = await import("../composition-store");
+    const first = await import("../store");
     const { addClip } = await import("../mutations");
     const c1 = first.getComposition("proj-c");
     const updated = addClip(c1, {
@@ -59,7 +59,7 @@ describe("composition-store (disk persistence)", () => {
 
     // simulate process restart by resetting the module registry
     vi.resetModules();
-    const second = await import("../composition-store");
+    const second = await import("../store");
     const rehydrated = second.getComposition("proj-c");
 
     expect(rehydrated.tracks[0].clips).toHaveLength(1);
@@ -69,7 +69,7 @@ describe("composition-store (disk persistence)", () => {
   it("memory mode bypasses disk", async () => {
     vi.stubEnv("VIBEFRAMES_PERSISTENCE", "memory");
     vi.resetModules();
-    const store = await import("../composition-store");
+    const store = await import("../store");
     const { addClip } = await import("../mutations");
     const c1 = store.getComposition("proj-d");
     store.setComposition(

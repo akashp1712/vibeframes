@@ -7,7 +7,7 @@ import {
   addTrack,
   removeTrack,
 } from "../mutations";
-import type { Composition } from "../types";
+import type { Composition } from "../schema";
 
 function makeComposition(overrides?: Partial<Composition>): Composition {
   return {

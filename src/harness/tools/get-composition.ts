@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTool } from "@mastra/core/tools";
-import { serialize } from "../serialize";
-import { getComposition } from "../composition-store";
+import { serialize } from "../composition/serialize";
+import { getComposition } from "../composition/store";
 
 export function createGetCompositionTool() {
   return createTool({

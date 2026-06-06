@@ -1,6 +1,6 @@
 "use client";
 
-import { useHarnessChat } from "@/harness/use-harness-chat";
+import { useHarnessChat } from "@/harness/react/use-harness-chat";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { StudioTopbar } from "@/components/studio/studio-topbar";
@@ -8,7 +8,7 @@ import { StudioStatusbar } from "@/components/studio/studio-statusbar";
 import { ChatPanel } from "@/components/studio/chat-panel";
 import { PreviewPanel } from "@/components/studio/preview-panel";
 import { CodePanel } from "@/components/studio/code-panel";
-import { useComposition } from "@/harness/use-composition";
+import { useComposition } from "@/harness/react/use-composition";
 
 /**
  * Client-side Studio shell. Receives `projectId` as a plain prop from the

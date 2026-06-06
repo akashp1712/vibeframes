@@ -16,7 +16,7 @@
 
 import { mkdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Composition } from "./types";
+import type { Composition } from "./schema";
 import { createEmptyComposition } from "./mutations";
 
 const DEFAULT_DATA_DIR = "./.data/compositions";

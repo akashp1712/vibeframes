@@ -7,7 +7,7 @@ import { DotPattern } from "@/components/ui/dot-pattern";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { cn } from "@/lib/utils";
 import { TimelineStrip } from "./timeline-strip";
-import type { ClipInfo } from "@/harness/use-composition";
+import type { ClipInfo } from "@/harness/react/use-composition";
 
 interface PreviewPanelProps {
   html: string | null;

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
-import type { AgentStatus } from "@/harness/use-harness-chat";
+import type { AgentStatus } from "@/harness/react/use-harness-chat";
 import { toolVerb } from "@/lib/tool-labels";
 import { cn } from "@/lib/utils";
 

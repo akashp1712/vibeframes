@@ -1,11 +1,11 @@
 import { Agent } from "@mastra/core/agent";
 import type { HarnessMode } from "@mastra/core/harness";
-import type { VibeFramesState } from "./state";
-import { buildDirectorPrompt } from "./prompts";
-import { createHarnessTools } from "./tools";
-import type { HarnessServices } from "./services";
+import type { VibeFramesState } from "../state";
+import { buildDirectorPrompt } from "./prompt";
+import { createHarnessTools } from "../tools";
+import type { HarnessServices } from "../services";
 import { openai } from "@ai-sdk/openai";
-import { HARNESS_CONFIG } from "./config";
+import { HARNESS_CONFIG } from "../config";
 
 export function createDirectorMode(services: HarnessServices): HarnessMode<VibeFramesState> {
   return {

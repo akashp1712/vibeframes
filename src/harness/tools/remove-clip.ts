@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createTool } from "@mastra/core/tools";
-import { removeClip } from "../mutations";
-import { serialize } from "../serialize";
-import { getComposition, setComposition } from "../composition-store";
+import { removeClip } from "../composition/mutations";
+import { serialize } from "../composition/serialize";
+import { getComposition, setComposition } from "../composition/store";
 
 export function createRemoveClipTool() {
   return createTool({

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ClipInfo } from "@/harness/use-composition";
+import type { ClipInfo } from "@/harness/react/use-composition";
 import { cn } from "@/lib/utils";
 
 interface TimelineStripProps {

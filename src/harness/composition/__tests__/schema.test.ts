@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CompositionSchema, ClipSchema } from "../types";
+import { CompositionSchema, ClipSchema } from "../schema";
 
 describe("CompositionSchema", () => {
   it("applies default width, height, fps", () => {

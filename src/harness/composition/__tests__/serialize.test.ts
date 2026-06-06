@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { serialize } from "../serialize";
-import type { Composition } from "../types";
+import type { Composition } from "../schema";
 
 function makeComposition(overrides?: Partial<Composition>): Composition {
   return {

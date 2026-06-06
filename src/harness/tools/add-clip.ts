@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createTool } from "@mastra/core/tools";
-import { addClip } from "../mutations";
-import { serialize } from "../serialize";
-import { getComposition, setComposition } from "../composition-store";
+import { addClip } from "../composition/mutations";
+import { serialize } from "../composition/serialize";
+import { getComposition, setComposition } from "../composition/store";
 
 export function createAddClipTool() {
   return createTool({

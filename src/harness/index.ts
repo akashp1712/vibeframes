@@ -1,7 +1,7 @@
 import { Harness } from "@mastra/core/harness";
 import { Memory } from "@mastra/memory";
 import { VibeFramesStateSchema, createInitialState, type VibeFramesState } from "./state";
-import { createDirectorMode } from "./mode";
+import { createDirectorMode } from "./director/mode";
 import { createHarnessServices, type HarnessServices } from "./services";
 import { createHarnessStorage } from "./storage";
 import { join, dirname } from "path";
@@ -49,9 +49,9 @@ export async function getVibeFramesHarness(projectId: string) {
 }
 
 export { HARNESS_CONFIG } from "./config";
-export type { Composition, Track, Clip } from "./types";
-export { CompositionSchema, TrackSchema, ClipSchema } from "./types";
-export { getComposition, setComposition } from "./composition-store";
+export type { Composition, Track, Clip } from "./composition/schema";
+export { CompositionSchema, TrackSchema, ClipSchema } from "./composition/schema";
+export { getComposition, setComposition } from "./composition/store";
 export {
   createEmptyComposition,
   addClip,
@@ -59,6 +59,6 @@ export {
   removeClip,
   addTrack,
   removeTrack,
-} from "./mutations";
-export { serialize } from "./serialize";
+} from "./composition/mutations";
+export { serialize } from "./composition/serialize";
 export type { VibeFramesState };

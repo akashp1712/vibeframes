@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { ChatMessage } from "../chat-message";
-import type { ChatMessage as CustomChatMessage, ToolCall } from "@/harness/use-harness-chat";
+import type { ChatMessage as CustomChatMessage, ToolCall } from "@/harness/react/use-harness-chat";
 
 const userMessage: CustomChatMessage = {
   id: "msg-1",

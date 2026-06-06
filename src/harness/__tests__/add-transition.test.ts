@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createAddTransitionTool } from "../tools/add-transition";
 import { createHarnessServices } from "../services";
-import { addClip } from "../mutations";
+import { addClip } from "../composition/mutations";
 import {
   getComposition,
   setComposition,
   __resetCompositionStoreForTests,
-} from "../composition-store";
+} from "../composition/store";
 
 /**
  * Behaviour spec for `add-transition`. The tool's job is to:
