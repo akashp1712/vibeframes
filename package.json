@@ -13,6 +13,8 @@
     "test:coverage:ui": "vitest --coverage --ui",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf node_modules .next",
+    "reset": "rm -rf node_modules .next && pnpm install",
+    "clear-data": "rm -rf .data",
     "prepare": "husky"
   },
   "dependencies": {
@@ -35,6 +37,8 @@
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "shadcn": "^4.8.2",
     "sonner": "^2",
     "tailwind-merge": "^3",
