@@ -1,9 +1,11 @@
 import { Harness } from "@mastra/core/harness";
 import { Memory } from "@mastra/memory";
+import { openai } from "@ai-sdk/openai";
 import { VibeFramesStateSchema, createInitialState, type VibeFramesState } from "./state";
 import { createDirectorMode } from "./director/mode";
 import { createHarnessServices, type HarnessServices } from "./services";
 import { createHarnessStorage } from "./storage";
+import { briefSubagent } from "./subagents/brief/definition";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -13,6 +15,21 @@ const SKILLS_PATH = join(__dirname, "skills");
 export const services: HarnessServices = createHarnessServices();
 const directorMode = createDirectorMode(services);
 const instances = new Map<string, Harness<VibeFramesState>>();
+
+/**
+ * Resolve a model id (e.g. "openai/gpt-4o-mini") to a language model
+ * instance. Used by Mastra to spawn subagents with their own model.
+ *
+ * The `as never` cast bridges a known type gap between @ai-sdk/openai v3
+ * (LanguageModelV3) and Mastra's stricter MastraLanguageModelV3 — the
+ * runtime shapes are compatible (Mastra calls doGenerate/doStream just
+ * like the AI SDK), but the type unions don't align. Same workaround the
+ * existing director/mode.ts uses implicitly via Agent's `model` field.
+ */
+function resolveModel(modelId: string) {
+  const name = modelId.startsWith("openai/") ? modelId.slice("openai/".length) : modelId;
+  return openai(name) as never;
+}
 
 export function createVibeFramesHarness(projectId: string) {
   // Single LibSQL store backs both Mastra threads/messages and any future
@@ -30,6 +47,11 @@ export function createVibeFramesHarness(projectId: string) {
     memory,
     modes: [directorMode],
     workspace: { skills: [SKILLS_PATH] },
+    // LLD-08 phase subagents. Each spawned by the Director via the
+    // auto-injected `subagent` tool. Brief is the first phase; subsequent
+    // slices add storyboard / compose / validate.
+    subagents: [briefSubagent],
+    resolveModel,
     disableBuiltinTools: ["task_write", "task_check", "ask_user", "submit_plan"],
   });
 }
