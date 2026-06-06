@@ -1,7 +1,7 @@
 # 🎬 VibeFrames
 
-> **A Mastra Harness agent that composes videos through conversation.** 
-> You describe what you want. The agent reasons, calls tools, and builds a [HyperFrames](https://github.com/heygen-com/hyperframes) composition—clip by clip, track by track—while you watch in real time.
+> **A Mastra Harness agent that composes videos through conversation.**
+> You describe what you want. The Director agent runs a four-phase pipeline — Brief → Storyboard → Compose → Validate — calling focused tools at each step, while you watch the composition build in real time inside the browser.
 
 ![VibeFrames Banner](./assets/vibeframes_banner.png)
 
@@ -33,20 +33,20 @@ By pairing the reasoning capabilities of state-of-the-art LLMs with a robust, de
 ## 🚀 How It Works
 
 ```
-  ┌──────────────┐    chat     ┌──────────────┐    tools    ┌──────────────┐
-  │              │   ──────►   │              │   ──────►   │              │
-  │     You      │             │    Mastra    │             │  HyperFrames │
-  │   describe   │             │   Harness    │             │   (render)   │
-  │   a video    │   ◄──────   │   agent      │   ◄──────   │              │
-  │              │    SSE      │              │   compose   │              │
-  └──────────────┘   events    └──────────────┘    tree     └──────────────┘
+  ┌──────────┐  chat   ┌───────────────────────────────────────────┐  HTML   ┌──────────────┐
+  │          │ ──────► │              Mastra Harness               │ ──────► │  HyperFrames │
+  │   You    │         │                                           │         │   (render)   │
+  │ describe │         │  BRIEF → STORYBOARD → COMPOSE → VALIDATE  │         │   in browser │
+  │  a video │ ◄────── │              Director Agent               │         │              │
+  │          │   SSE   │                                           │         │              │
+  └──────────┘  events └───────────────────────────────────────────┘         └──────────────┘
 ```
 
-1. **You describe your idea:** *"Add a sleek neon title slide with a purple-to-blue gradient and type write 'Welcome to the Future'."*
-2. **Mastra Harness reasons:** The agent maps the request to the appropriate mode (`plan` or `vibe`) and determines the required action.
-3. **Tools mutate the tree:** Fine-grained, typed tool calls modify a canonical composition tree (fully validated via Zod schemas).
-4. **HyperFrames renders in real-time:** The tree is immediately pushed to a `<hyperframes-player>` web component inside the browser.
-5. **SSE streaming:** Reasoning tokens, tool logs, and state updates stream back to the frontend in real time, keeping the user in the loop.
+1. **Brief** — Director reads your prompt and calls `commit-brief`, locking in intent, arc, format, duration, brand, and narration style.
+2. **Storyboard** — Director calls `list-blocks` (to see available HyperFrames blocks), then `commit-storyboard`, producing 2–20 beats — each a cinematic shot spec.
+3. **Compose** — Director calls `create-beat` once per beat. The translator picks the right block, fills in brand-aware vars, and emits clips into the composition tree.
+4. **Validate** — Director calls `check-storyboard`. If issues are found it revises beats and rebuilds, then replies in 2 sentences.
+5. **SSE streaming** — every phase emits events back to the browser: tool cards, thinking indicators, and the live `compositionHtml` payload that re-renders the preview iframe.
 
 ---
 
@@ -54,11 +54,11 @@ By pairing the reasoning capabilities of state-of-the-art LLMs with a robust, de
 
 | Layer | Technology | Why It Fits |
 | :--- | :--- | :--- |
-| **Agent Runtime** | [Mastra](https://mastra.ai) Harness | Multi-mode reasoning, unified state, typed toolkits, and an integrated event bus out of the box. |
-| **Video Engine** | [HyperFrames](https://github.com/heygen-com/hyperframes) | HTML-native, deterministic, and highly structural—ideal for AI-driven generation. |
-| **Model** | OpenAI `o4-mini` via [AI SDK](https://sdk.vercel.ai) | Blazing fast reasoning and excellent structure-following at low cost. |
-| **Framework** | Next.js 16 (App Router), React 19 | Server-Sent Events (SSE) route handlers, Server Components, and smooth reactivity. |
-| **Testing** | Vitest + React Testing Library | TDD workflow — tests are the spec, written before implementation. |
+| **Agent Runtime** | [Mastra](https://mastra.ai) Harness | Single-agent Director with state-aware instructions, phase-guarded tools, and skills loaded into workspace. |
+| **Video Engine** | [HyperFrames](https://github.com/heygen-com/hyperframes) | HTML-native, deterministic, block-based — ideal for LLM-driven generation. |
+| **Model** | OpenAI `gpt-4o-mini` via [AI SDK](https://sdk.vercel.ai) | Fast reasoning + structured tool calling. Override via `VIBEFRAMES_MODEL`. |
+| **Framework** | Next.js 16 (App Router), React 19 | SSE route handlers, per-project `[projectId]` studio route, and smooth reactivity. |
+| **Testing** | Vitest (unit + e2e) | TDD — tests are the spec. `pnpm test` runs unit tests; `pnpm test:e2e` runs the live LLM pipeline. |
 | **UI Styling** | shadcn/ui (base-nova) + Tailwind v4 + MagicUI | Light-mode-first aesthetic with shimmer, border-beam, and shiny-text micro-animations. |
 
 ---
@@ -80,27 +80,34 @@ VibeFrames is structured around a rigorous design-first lifecycle. All core arch
 
   BUILD PHASE  ───────────────────────────────────────────
   ✅  M8: Core Scaffold, Studio UI & TDD Foundation
-  ✅  M9: Harness Loop End-to-End Integration            👈 [Just shipped]
-  ⬜  M10: Full Interactive Studio + Canvas + Tool Suite
-  ⬜  M11: Persistence, Project Management & Auth
-  ⬜  M12: Performance Polish, Micro-animations & Dev Deploy
-  ⬜  M13: Production Launch
+  ✅  M9: Harness Loop End-to-End Integration
+  ✅  M10: Single-Agent Director + 4-Phase Pipeline         👈 [Just shipped]
+  🔄  M11: Studio Polish — captions, timeline, per-project routing
+  ⬜  M12: Persistence, Project Management & Auth
+  ⬜  M13: Performance Polish, Micro-animations & Deploy
+  ⬜  M14: Production Launch
 ```
 
 ---
 
 ## 📖 Deep Dive Into the Architecture
 
-Before writing a single line of application code, we designed every layer. The repository contains extensive architectural documentation:
+The repository is built design-first. Every layer is documented before the code was written:
 
-*   **[`docs/README.md`](./docs/README.md):** The starting guide to all technical docs.
-*   **[HyperFrames Exploration](./docs/01-hyperframes-exploration.md):** Understanding the video block structure.
-*   **[Mastra Primer](./docs/02-mastra-primer.md):** The bottom-up agentic building blocks.
-*   **[Harness deep-dive](./docs/03-harness-why-what-how.md):** State management patterns and event pipelines.
-*   **[Our Harness design](./docs/04-our-harness-vhld.md):** The dual-mode (plan + vibe) state machine.
-*   **[HLD — tools & flows](./docs/05-hld-tools-flows.md):** Server-Sent Events protocol and composition pipeline.
-*   **[Tech stack](./docs/06-tech-stack.md):** Decisive structural choices and future upgrade plans.
-*   **[UI exploration](./docs/07-ui-system.md):** Typography, color-palettes, and canvas styling.
+**Active reference (always current):**
+*   **[`docs/harness-architecture.md`](./docs/harness-architecture.md):** Single source of truth — repo map, state schema, tool catalogue, how to add blocks/rules/skills, SSE event shape, and a local dev quick-reference.
+
+**Design phase docs (historical context):**
+*   **[`docs/README.md`](./docs/README.md):** Guide to all design docs.
+*   **[HyperFrames Exploration](./docs/01-hyperframes-exploration.md):** Block catalog structure.
+*   **[Mastra Primer](./docs/02-mastra-primer.md):** Agentic building blocks bottom-up.
+*   **[Harness deep-dive](./docs/03-harness-why-what-how.md):** State management and event pipelines.
+*   **[HLD — tools & flows](./docs/05-hld-tools-flows.md):** SSE protocol and composition pipeline.
+
+**LLD series:**
+*   **[LLD-08: Phased Director](./docs/lld/lld-08-phased-director.md):** Single-agent 4-phase design rationale.
+*   **[LLD-09: Codebase Cleanup](./docs/lld/lld-09-codebase-cleanup.md):** Hierarchical harness reorg.
+*   **[Analysis: HyperFrames vs VibeFrames](./docs/analysis/hyperframes-vs-vibeframes.md):** Integration boundary analysis.
 
 *   **Architecture Decision Records (ADRs):**
     *   [ADR-001: SSE Chat Transport](./docs/decisions/ADR-001-sse-chat-transport.md)
@@ -111,173 +118,165 @@ Before writing a single line of application code, we designed every layer. The r
 
 ## 📐 Core Architecture & Harness Agent Diagrams
 
-Here are the high-level design (HLD) diagrams and runtime structures illustrating how **VibeFrames** uses Mastra Harness, processes prompts, mutates states, and streams events back to your interface.
+Here are the high-level design diagrams illustrating how **VibeFrames** uses Mastra Harness, runs the four-phase pipeline, and streams events back to your browser.
 
-### 1. Mastra Construct Stack & Harness Anatomy
+### 1. Harness Anatomy — Single Director Agent
 
-This diagram explains how Mastra's building blocks connect together under the hood—from the long-lived Project Harness container at the top down to the OpenAI `o4-mini` model at the bottom:
+One agent, one mode, four phases in one conversation turn:
 
 ```text
-  HOW MASTRA CONSTRUCTS CONNECT
-  ═════════════════════════════
-
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │                                                                     │
-  │                         ╔═══════════════╗                           │
-  │                         ║   HARNESS     ║  ← long-lived container   │
-  │                         ║               ║    per project            │
-  │                         ╚═══════╤═══════╝                           │
-  │                                 │                                   │
-  │                   ┌─────────────┼─────────────┐                     │
-  │                   │             │             │                     │
-  │                   ▼             ▼             ▼                     │
-  │            ╔════════════╗ ╔══════════╗ ╔════════════╗               │
-  │            ║   MODES    ║ ║  STATE   ║ ║  MEMORY    ║               │
-  │            ║            ║ ║  (Zod)   ║ ║  + STORAGE ║               │
-  │            ╚═════╤══════╝ ╚══════════╝ ╚════════════╝               │
-  │                  │                                                  │
-  │         ┌────────┴────────┐                                         │
-  │         │                 │                                         │
-  │         ▼                 ▼                                         │
-  │  ╔════════════╗    ╔════════════╗                                   │
-  │  ║ MODE:plan  ║    ║ MODE:vibe  ║   ← swap agent behavior          │
-  │  ║            ║    ║            ║     without rebuilding             │
-  │  ╚═════╤══════╝    ╚═════╤══════╝                                   │
-  │        │                 │                                          │
-  │        ▼                 ▼                                          │
-  │  ╔════════════╗    ╔════════════╗                                   │
-  │  ║   AGENT    ║    ║   AGENT    ║   ← wraps model + instructions    │
-  │  ║  Planner   ║    ║  Composer  ║     + tools                       │
-  │  ╚═════╤══════╝    ╚═════╤══════╝                                   │
-  │        │                 │                                          │
-  │        │     ┌───────────┤                                          │
-  │        │     │           │                                          │
-  │        ▼     ▼           ▼                                          │
-  │  ╔══════════╗     ╔════════════╗                                    │
-  │  ║  TOOLS   ║     ║   SKILLS   ║   ← tools = actions               │
-  │  ║ (Zod in/ ║     ║  (loaded   ║     skills = knowledge             │
-  │  ║  out)    ║     ║   on       ║                                    │
-  │  ╚════╤═════╝     ║   demand)  ║                                    │
-  │       │           ╚════════════╝                                    │
-  │       ▼                                                             │
-  │  ╔══════════════════════╗                                           │
-  │  ║    AI SDK CORE       ║   ← unified LLM interface                 │
-  │  ║  generateText()      ║     (provider-agnostic)                   │
-  │  ║  streamText()        ║                                           │
-  │  ╚══════════╤═══════════╝                                           │
-  │             │                                                       │
-  │             ▼                                                       │
-  │  ╔══════════════════════╗                                           │
-  │  ║    LLM PROVIDER      ║   ← OpenAI o4-mini                       │
-  │  ║  @ai-sdk/openai      ║     (swappable to any provider)           │
-  │  ╚══════════════════════╝                                           │
-  │                                                                     │
-  └─────────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │               VibeFrames Harness  (per project)                 │
+  │                                                                 │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  STATE  (VibeFramesState — Zod)                         │   │
+  │  │  brief, storyboard, validationReport                    │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  STORAGE  LibSQL  (threads · messages · state)          │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  DIRECTOR  —  ONE Agent                                 │   │
+  │  │                                                         │   │
+  │  │   model:   gpt-4o-mini  (override via VIBEFRAMES_MODEL) │   │
+  │  │   prompt:  state-aware — phase + state summary rebuilt  │   │
+  │  │            on every LLM call                            │   │
+  │  │   tools:   11 tools, all visible, phase-guarded inside  │   │
+  │  │   skills:  workflow · brief · storyboard · design ·     │   │
+  │  │            validate  (loaded once, cached in prompt)    │   │
+  │  └──────────────────┬──────────────────────────────────────┘   │
+  │                     │                                          │
+  │         one user turn = full pipeline                           │
+  │                     │                                          │
+  │   ┌─────────┐ ┌─────────────┐ ┌─────────┐ ┌──────────┐        │
+  │   │  BRIEF  │►│ STORYBOARD  │►│ COMPOSE │►│ VALIDATE │        │
+  │   └─────────┘ └─────────────┘ └─────────┘ └──────────┘        │
+  │                                                                 │
+  └─────────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+                  SSE stream → browser
 ```
 
-The concrete runtime anatomy of a single project's **VibeFrames Harness** instance is structured as follows:
+### 2. Four-Phase Pipeline
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│               VibeFrames Harness (per project)                    │
-│                                                                   │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-│  │      STATE       │  │     STORAGE      │  │     MEMORY     │  │
-│  │                  │  │                  │  │                │  │
-│  │  projectId       │  │  LibSQLStore     │  │  lastMessages  │  │
-│  │  composition     │  │  (file:local.db) │  │  : 20          │  │
-│  │  selection       │  │                  │  │                │  │
-│  │  projectMeta     │  │  threads         │  │  OM: deferred  │  │
-│  │  renderStatus    │  │  messages        │  │                │  │
-│  │  yolo: true      │  │  state snapshots │  │  semantic:     │  │
-│  └──────────────────┘  └──────────────────┘  │  deferred      │  │
-│                                              └────────────────┘  │
-│                                                                   │
-│  ┌─────────────────────────────────┐┌───────────────────────────┐ │
-│  │   MODE: "plan" (default)        ││   MODE: "vibe"             │ │
-│  │                                 ││                           │ │
-│  │   Agent: Planner                ││   Agent: Composer          │ │
-│  │   Model: o4-mini (low effort)   ││   Model: o4-mini (medium)  │ │
-│  │   instructions: buildPlan-      ││   instructions: buildVibe- │ │
-│  │     nerPrompt(state)            ││     Prompt(state)          │ │
-│  │   tools: contextTools ONLY      ││   tools: ALL tools         │ │
-│  │                                 ││                           │ │
-│  │   PURPOSE: think, propose plan  ││   PURPOSE: execute plan    │ │
-│  │   OUTPUT: structured plan card  ││   OUTPUT: composition      │ │
-│  │     (user approves → vibe)      ││     mutations + response   │ │
-│  └─────────────────────────────────┘└───────────────────────────┘ │
-│                                                                   │
-│  ┌──────────────────────────┐  ┌────────────────────────────────┐ │
-│  │       WORKSPACE          │  │          EVENT BUS             │ │
-│  │                          │  │                                │ │
-│  │   skills/                │  │  agent.thinking                │ │
-│  │   ├── hyperframes/       │  │  agent.responding              │ │
-│  │   ├── composition/       │  │  tool.calling                  │ │
-│  │   ├── captions/          │  │  tool.result                   │ │
-│  │   └── audio/             │  │  composition.delta             │ │
-│  │                          │  │  run.complete                  │ │
-│  │                          │  │  run.error                    │ │
-│  └──────────────────────────┘  └────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘
+  ┌────────┐    ┌────────────┐    ┌─────────┐    ┌──────────┐
+  │ BRIEF  ├───►│ STORYBOARD ├───►│ COMPOSE ├───►│ VALIDATE │
+  └────────┘    └────────────┘    └─────────┘    └──────────┘
+  intent        plan beats        emit clips     check rules
+```
+
+| Phase      | Reads                    | Writes                      | Key Tools                                         |
+|------------|--------------------------|-----------------------------|---------------------------------------------------|
+| Brief      | user prompt              | `state.brief`               | `commit-brief`                                    |
+| Storyboard | `state.brief`            | `state.storyboard`          | `list-blocks`, `commit-storyboard`, `revise-beat` |
+| Compose    | `state.storyboard`       | composition tree (LibSQL)   | `create-beat`, `rebuild-beat`, `finish-compose`   |
+| Validate   | storyboard + composition | `state.validationReport`    | `check-storyboard`                                |
+
+`add-clip`, `update-clip`, `remove-clip` live in `tools-internal/` — the agent **never** sees them. Only the translator calls them during `create-beat` / `rebuild-beat`.
+
+### 3. Repo Map (src/harness/)
+
+```text
+  src/harness/
+  ├── index.ts                  getVibeFramesHarness() factory + barrel
+  ├── state.ts                  Zod: Brief, Beat, Storyboard, ValidationReport
+  ├── config.ts                 model defaults, fps, resolution
+  ├── storage.ts                LibSQL store factory
+  ├── brand-registry.ts         canonical brand colors (Linear, Stripe …)
+  │
+  ├── director/                 the single agent
+  │   ├── agent.ts              Mastra Agent + Mode wiring
+  │   ├── prompt.ts             state-aware system prompt (phase-aware)
+  │   ├── phase.ts              phase derivation (Brief/Storyboard/Compose/Validate)
+  │   ├── tools.ts              tool registry (re-exports from tools/)
+  │   └── skills/               markdown guides loaded into workspace
+  │       ├── workflow/skill.md     ← meta-skill: read FIRST every turn
+  │       ├── brief/skill.md        how to fill a Brief
+  │       ├── storyboard/skill.md   concept-first beat planning
+  │       ├── design/skill.md       block variety, palette, overlays
+  │       └── validate/skill.md     how to interpret the report
+  │
+  ├── composition/              the artifact we build
+  │   ├── schema.ts             Clip / Track / Composition (Zod)
+  │   ├── mutations.ts          pure ops (addClip, removeClip …)
+  │   ├── store.ts              disk-backed per-project store
+  │   ├── serialize.ts          JSON tree → HyperFrames HTML
+  │   ├── translator.ts         beat → clip mutations (heart of Compose)
+  │   └── validation-rules.ts   pure rule fns (beat-not-built, etc.)
+  │
+  ├── tools/                    what the agent can call
+  │   ├── commit-brief.ts       writes state.brief
+  │   ├── storyboard-tools.ts   propose/commit/revise storyboard
+  │   ├── compose-tools.ts      create/rebuild/revise beat, finish-compose
+  │   ├── check-storyboard.ts   runs validation rules → report
+  │   ├── get-composition.ts    read-only inspection
+  │   └── list-blocks.ts        slim catalog (id + description, no HTML)
+  │
+  ├── tools-internal/           low-level mutation primitives
+  │   ├── add-clip.ts           NOT exposed to the agent
+  │   ├── update-clip.ts        called only by the translator
+  │   └── remove-clip.ts
+  │
+  ├── react/                    client hooks
+  │   ├── use-composition.ts    derive ClipInfo[] + html from messages
+  │   └── use-harness-chat.ts   POST /api/chat, parse SSE stream
+  │
+  └── __e2e__/
+      └── pipeline.live.test.ts opt-in live LLM e2e (pnpm test:e2e)
 ```
 
 ---
 
-### 2. End-to-End Core Request Flow
+### 4. End-to-End Request Flow
 
-This diagram traces one user message turn through the server routes, into the Harness's active Mode, through LLM reasoning, state updates via mutation tools, and finally back to the browser:
+One user prompt → full pipeline → compositionHtml → preview re-render:
 
 ```text
   ┌──────────────────────────────────────────────────────────────────────┐
   │  USER                                                                │
-  │  "make the title clip 2 seconds longer"                              │
-  │  [selection: { clipId: "title-1", intent: "edit" }]                  │
+  │  "Make a 15-second product demo for Linear, dark minimal vibe"       │
   └────────────┬─────────────────────────────────────────────────────────┘
-               │
-               │  POST /api/chat
+               │  POST /api/chat  { messages, data: { projectId } }
                ▼
   ┌──────────────────────────────────────────────────────────────────────┐
-  │  ROUTE HANDLER                                                       │
+  │  ROUTE HANDLER  (app/api/chat/route.ts)                              │
   │                                                                      │
-  │  1. getOrCreateHarness("proj-1")        ← cache hit                  │
-  │  2. harness.setState({ selection })     ← inject selection           │
-  │  3. harness.subscribe(events → SSE)     ← wire event stream          │
-  │  4. harness.sendMessage({ content })    ← start agent turn           │
+  │  1. getVibeFramesHarness(projectId)     ← cache hit or create        │
+  │  2. harness.subscribe(event → SSE)      ← wire event stream          │
+  │  3. harness.sendMessage({ content })    ← fire the Director          │
   └────────────┬─────────────────────────────────────────────────────────┘
-               │
                ▼
   ┌──────────────────────────────────────────────────────────────────────┐
-  │  HARNESS → MODE → AGENT                                             │
+  │  DIRECTOR AGENT  (one turn = full pipeline)                          │
   │                                                                      │
-  │  instructions(state):                                                │
-  │    "You are Composer. Project: proj-1.                               │
-  │     Composition: 3 clips, 15s.                                       │
-  │     Selection: title-1 (intent: edit).                               │
-  │     Use tools to modify."                                            │
+  │  Phase 1 — BRIEF                                                     │
+  │    commit-brief({ message, arc, format, durationMs, brand … })       │
+  │    → state.brief is locked                                           │
   │                                                                      │
-  │  ┌─ LLM Reasoning ──────────────────────────────────────────────┐   │
-  │  │  User wants title clip longer by 2s.                         │   │
-  │  │  Current: title-1 duration=4s. New: 6s.                      │   │
-  │  │  Plan: get-composition → update-clip → validate.             │   │
-  │  └──────────────────────────────────────────────────────────────┘   │
+  │  Phase 2 — STORYBOARD                                                │
+  │    list-blocks()                    ← sees 21 block ids + descriptions│
+  │    commit-storyboard({ beats[] })   ← state.storyboard = 5 beats    │
   │                                                                      │
-  │  Tool calls:                                                         │
-  │    ① get-composition({})            → reads state.composition        │
-  │    ② update-clip({ clipId, dur })   → mutates tree, emits delta     │
-  │    ③ validate-composition({})       → pure validation, no mutation   │
+  │  Phase 3 — COMPOSE  (per beat)                                       │
+  │    create-beat({ index: 0 })        ← translator picks hero-title    │
+  │    create-beat({ index: 1 })        ← translator picks stats-callout │
+  │    …                                                                 │
+  │    finish-compose()                 ← gate check, returns html       │
   │                                                                      │
-  │  Final text: "Done — I extended the title clip to 6 seconds."        │
+  │  Phase 4 — VALIDATE                                                  │
+  │    check-storyboard()               ← runs validation rules          │
+  │    → reply: "Here's your 15s Linear demo — 5 beats, dark minimal."  │
   └────────────┬─────────────────────────────────────────────────────────┘
-               │
-               │  SSE events stream back
+               │  SSE events throughout
                ▼
   ┌──────────────────────────────────────────────────────────────────────┐
-  │  CLIENT                                                              │
+  │  CLIENT (React)                                                      │
   │                                                                      │
-  │  Chat panel:     thinking → tool cards → response text               │
-  │  Preview:        re-rendered on composition.delta                     │
-  │  Timeline:       title-1 bar extended to 6s                          │
-  │  Properties:     duration field updated to 6                         │
+  │  Chat panel:   tool cards per tool call + final reply text           │
+  │  Preview:      compositionHtml from tool_end → iframe re-renders     │
+  │  Timeline:     clip bars appear beat by beat                         │
   └──────────────────────────────────────────────────────────────────────┘
 ```
 
