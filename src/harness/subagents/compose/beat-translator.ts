@@ -184,6 +184,27 @@ function bgClassForBrand(brief: Brief): string {
 }
 
 /**
+ * Build a brand-color accent overlay for the background clip. Renders a
+ * subtle bottom-edge gradient bar in the brand's primaryColor — visible
+ * enough to feel branded, not so loud it competes with the main content.
+ *
+ * Returning empty string when no primaryColor is set lets the caller
+ * concatenate without conditional branching.
+ */
+function brandAccent(brief: Brief): string {
+  const color = brief.brand.primaryColor;
+  if (!color) return "";
+  // Inline style so the literal hex appears in the rendered HTML — this
+  // is what the brand-color-presence validation rule looks for. Tailwind
+  // arbitrary-value classes like `bg-[#5E6AD2]` would also work but
+  // depend on the runtime building Tailwind on the fly.
+  return (
+    `<div class="absolute inset-x-0 bottom-0 h-1.5" ` +
+    `style="background: linear-gradient(to right, transparent, ${color}, transparent);"></div>`
+  );
+}
+
+/**
  * Project a beat's concept into vars for the picked primary block.
  * Strategy: short, evocative copy derived from the concept and the brief.
  * Real LLM-generated copy belongs in the Storyboard prompt's voCue/concept;
@@ -287,6 +308,13 @@ export function translateBeat(opts: {
   const bgBlock = catalog.find((b) => b.id === "background-fill")!;
   const primaryBlock = pickPrimaryBlock(beat, catalog);
 
+  // Wrap the bg HTML in a relative container so the brand accent overlay
+  // can be absolutely positioned over it. Empty accent → wrapper still
+  // works, just with no overlay.
+  const accent = brandAccent(brief);
+  const bgInner = renderBlock(bgBlock, { bgClass });
+  const bgHtml = `<div class="relative h-full w-full">${bgInner}${accent}</div>`;
+
   const clips: BeatClip[] = [
     {
       trackId: TRACK_BG,
@@ -294,7 +322,7 @@ export function translateBeat(opts: {
       startMs,
       durationMs: beat.durationMs,
       blockId: bgBlock.id,
-      html: renderBlock(bgBlock, { bgClass }),
+      html: bgHtml,
     },
     {
       trackId: TRACK_MAIN,

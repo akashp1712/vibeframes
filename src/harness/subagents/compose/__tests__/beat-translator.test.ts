@@ -139,6 +139,30 @@ describe("translateBeat", () => {
     const t = translateBeat({ beat: beats[1]!, storyboard, brief, catalog });
     expect(t.clips.find((c) => c.trackId === "track-overlay")).toBeUndefined();
   });
+
+  it("injects brief.brand.primaryColor into the background clip's HTML", () => {
+    // brief.brand.primaryColor is "#5E6AD2"
+    const t = translateBeat({ beat: beats[0]!, storyboard, brief, catalog });
+    const bg = t.clips.find((c) => c.trackId === "track-bg")!;
+    expect(bg.html).toContain("#5E6AD2");
+  });
+
+  it("does NOT inject a brand color when primaryColor is undefined", () => {
+    const briefSansColor: Brief = { ...brief, brand: { name: "Linear" } };
+    const t = translateBeat({ beat: beats[0]!, storyboard, brief: briefSansColor, catalog });
+    const bg = t.clips.find((c) => c.trackId === "track-bg")!;
+    expect(bg.html).not.toContain("#");
+  });
+
+  it("brand-accent satisfies the brand-color-presence rule (>=30% of clips)", () => {
+    // Translate every beat — the bg clip on each carries the accent, which
+    // is half of all clips emitted (bg + main = 2 per beat). Half ≥ 30%.
+    const allHtml = beats
+      .flatMap((b) => translateBeat({ beat: b, storyboard, brief, catalog }).clips)
+      .map((c) => c.html);
+    const withColor = allHtml.filter((h) => h.toLowerCase().includes("#5e6ad2"));
+    expect(withColor.length / allHtml.length).toBeGreaterThanOrEqual(0.3);
+  });
 });
 
 describe("translateStoryboard", () => {
