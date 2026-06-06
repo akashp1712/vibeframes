@@ -202,16 +202,26 @@ Flip repo to public · push all 8 docs + 4 ADRs · **LinkedIn post #1**:
 ### M10 — The real thing  *(8–12 sessions — biggest module)*
 Break into ordered sub-modules. Each ships its own LLD if non-trivial.
 
-| Sub | Goal | Sessions |
-|---|---|---|
-| M10a | Block registry: wrap HyperFrames catalog into Zod-schema'd local blocks (`video-clip`, `text-overlay`, `image-clip`, `audio-track`, `caption`) | 1–2 |
-| M10b | Editor 4-pane shell (resizable: AssetLib · Preview · Timeline · Properties + Chat drawer) | 1 |
-| M10c | **Timeline lib spike & decision** → ADR-005 (`@xzdarcy/react-timeline-editor` vs custom dnd-kit) → implement | 2 |
-| M10d | Properties panel (schema-driven from block registry) | 1 |
-| M10e | Asset library + drag-from-library → timeline (still in-memory blob URLs) | 1 |
-| M10f | Full tool catalog: context (`get-project`, `get-composition`, `search-blocks`, `get-block-schemas`), mutation (`add-clip`, `update-clip`, `remove-clip`, `reorder`, `set-meta`), validation (`validate-composition`) | 2–3 |
-| M10g | Skills authored: `hyperframes/SKILL.md`, `composition/SKILL.md`, `captions/SKILL.md` (wrap HeyGen's `hyperframes` skill content) — `lld-07-skills.md` | 1 |
-| M10h | Kibo UI chat: `<Reasoning>`, `<Message>`, `<ToolCall>` (calling/executing/result), `<CompositionDelta>` indicator | 1 |
+| Sub | Goal | Sessions | Status |
+|---|---|---|---|
+| M10a | Block registry: 21 Zod-schema'd HyperFrames blocks in `services/clip-registry.service.ts` (background-fill, hero-title, kinetic-words, split-screen, stats-callout, quote-pull, cta-button, end-card, lower-third, social/follow/effect overlays) | 1–2 | ✅ shipped |
+| M10b | Editor 3-pane shell (Chat · Preview · Code) — 4-pane (Properties) deferred | 1 | ✅ shipped |
+| M10c | Timeline visualization in Preview panel (GSAP-driven iframe) — ADR-005 deferred | 2 | ✅ shipped (basic) |
+| M10d | Properties panel | 1 | ⏸ deferred to M-future |
+| M10e | Asset library | 1 | ⏸ deferred to M-future |
+| M10f | Tool catalog: brief/storyboard/compose/validate phase tools (`commit-brief`, `commit-storyboard`, `create-beat`, `rebuild-beat`, `revise-beat`, `finish-compose`, `check-storyboard`, `list-blocks`, `get-composition`); low-level mutations (`add-clip`/`update-clip`/`remove-clip`) hidden in `tools-internal/` and called only by translator | 2–3 | ✅ shipped |
+| M10g | Skills authored: `workflow/SKILL.md`, `brief/SKILL.md`, `storyboard/SKILL.md`, `design/SKILL.md`, `validate/SKILL.md` in `director/skills/` — see `docs/harness-architecture.md` | 1 | ✅ shipped |
+| M10h | Studio chat with progressive rendering: tool entries surface live via SSE; preview updates per `create-beat` call | 1 | ✅ shipped |
+| M10i | Pipeline architecture: explored subagents (LLD-08 v1), rolled back to single Director (LLD-08 v2) — workflow skill drives ordering, brand-registry sanitizes LLM hex output, brand-color accent on every bg clip | 2 | ✅ shipped |
+| M10j | Cleanup: deleted dead `transitionRegistry`, `tools/index.ts` legacy barrel, `add-transition` tool. Wrote `docs/harness-architecture.md` as SSOT. | 1 | ✅ shipped |
+
+What landed (recap):
+- One-prompt → finished composition end-to-end on `gpt-4o-mini` in ~30-40s
+- 5-skill discipline pack (workflow / brief / storyboard / design / validate)
+- 21-block catalog with brand-color injection on bg track
+- 8 deterministic validation rules
+- Brand registry fallback (Linear, Stripe, Vercel, ~20 known brands)
+- Single source of truth doc at `docs/harness-architecture.md`
 
 - **LinkedIn post #3** mid-M10: composition model post
 - **LinkedIn post #4** end of M10: full demo (chat → timeline updates → preview live)
@@ -257,7 +267,7 @@ Break into ordered sub-modules. Each ships its own LLD if non-trivial.
 
 - **MP4 render** via `hyperframes render` + Inngest workflow
 - **Observational memory** (Mastra `Memory` w/ observer+reflector)
-- **Subagents** (forked)
+- **Subagents** — tried in M10 LLD-08 v1, rolled back to single Director
 - **Plan / Build modes** (only `vibe` for MVP)
 - **Multiplayer / collab**
 - **HeyGen avatar block**
@@ -267,6 +277,105 @@ Break into ordered sub-modules. Each ships its own LLD if non-trivial.
 - **Multi-pod Harness state** (Redis-backed store)
 
 Each gets its own ADR + LLD when picked up.
+
+---
+
+## 4.5 MVP roadmap — what's "good enough" at each tier
+
+Working > broad. Each MVP should ship something demonstrable end-to-end.
+Polish trumps coverage; if a feature is half-working, it doesn't ship.
+
+### MVP 1.0 — "the prompt-to-clip MVP"  *(today, M10 done)*
+
+**Acceptance:** user types a prompt → 30-second branded composition,
+no manual edits, validation passes clean.
+
+| Capability | Status |
+|---|---|
+| Single-agent Director walks brief → storyboard → compose → validate | ✅ |
+| 21-block catalog with brand-aware variant rendering | ✅ |
+| 5 markdown skills (workflow / brief / storyboard / design / validate) | ✅ |
+| Brand registry (Linear, Stripe, Vercel, …) with hex sanitation | ✅ |
+| Studio: 3-pane shell, progressive preview render via SSE | ✅ |
+| Validation: 8 deterministic rules, retry on errors (≤2 attempts) | ✅ |
+| `pnpm test:e2e` live LLM e2e test | ✅ |
+| `docs/harness-architecture.md` SSOT | ✅ |
+
+**Known gaps in 1.0** (not regressions, never had them):
+- No transitions between beats
+- No diagram / flowchart blocks (composed from divs only)
+- No audio / VO / music
+- No captions
+- Preview is opacity crossfade only (no GSAP scene transitions, no shaders)
+- Translator copy comes from brand.name + brief.message — no per-beat
+  user-facing copy field, so all beats lean on brand identity for headlines
+
+### MVP 2.0 — "the explainer MVP"
+
+**Acceptance:** the system can produce a 30-second tech-product
+explainer (e.g. "explain Harness with a high-level diagram") with
+narration-quality copy and at least one diagram-style scene.
+
+Picks from `.agents/skills/website-to-hyperframes` and the `hyperframes`
+core skill — adopt the discipline patterns (per-beat HTML evidence,
+animation-map verification, beat-level VO scripting).
+
+| New work | Notes |
+|---|---|
+| **Per-beat copy fields** in `Storyboard.Beat` — `headline`, `subheading`, `voCue` (already exists) | Decouples user-facing copy from internal `concept` prose. Translator stops slicing concept into headlines. |
+| **3-5 new "diagram" blocks** (flowchart-vertical, kanban, timeline-strip, terminal-typer, code-block) | These are the "feature reveal" workhorses for explainer videos. Compose from divs + Tailwind, no real graphics yet. |
+| **Better selection heuristics** in `pickPrimaryBlock` — concept-keyword routing tuned per category | Stops the "extreme-close → stats-callout" overfit. |
+| **Captions track** (LLD-07) | Per-word karaoke, simple GSAP impl. No transcription — VO scripts come from beat.voCue. |
+| **Transitions v0** — restore from git, but ship 4 transitions only: cut, fade, push, blur | Schema: `Beat.transitionToNext: { kind, durationMs } \| null`. Translator emits short overlay clip on `track-transition`. NO shader transitions yet. |
+| **Validation rules** — diagram-presence, voCue-coverage, transition-variety | Catches missing pieces. |
+| **Storyboard skill update** — explainer arc patterns, diagram beat templates | One section: "for explainer prompts, use this beat skeleton". |
+
+### MVP 3.0 — "the social MVP"
+
+**Acceptance:** vertical / portrait social ads with platform-correct
+overlays and pacing.
+
+| New work | Notes |
+|---|---|
+| **Vertical (1080×1920) layout pass** in translator | Rework block templates that assume 1920×1080. Composition `format` field already exists. |
+| **Platform packs** (TikTok / Reels / Shorts / IG feed) — different overlay defaults, different timing rules | Skill addition: `platforms.md`. |
+| **Hashtag / handle / engagement counter overlays** are real (already in catalog, just need platform-justified surfacing in design.md) | Tighten the design skill's "social-justified only" rule. |
+| **Music track support** (uploaded mp3 → audio element) | LibSQL row reference; player plays the audio in iframe. No analysis, no audio-reactive yet. |
+| **Storyboard rhythm: "fast" path well-tuned** (8-15 beats, hard cuts, sub-second beats) | Today the agent picks `fast` rhythm but hits the 2s minimum durationMs floor — need to adjust. |
+
+### MVP 4.0 — "the cinematic MVP"
+
+**Acceptance:** the system produces filmic / dramatic videos with
+real visual texture (grain, light leak, rack-focus, parallax).
+
+| New work | Notes |
+|---|---|
+| **Effect overlays** — grain, scanlines, vignette, light-leak | Already in catalog as units; activate via design skill rules. |
+| **Shader transitions** (sdf-iris, whip-pan, ridged-burn, light-leak) — ports from `hyperframes/shader-transitions` | Real WebGL. Restored after MVP 2.0's transition foundation. |
+| **HTML-in-canvas** for hero treatments — 3D iPhone / MacBook with HTML screen | Pulls from `vfx-iphone-device` block in HeyGen registry. Big lift; needs Three.js + WebGL. |
+| **Audio-reactive** — bass→scale, mid→shape, treble→glow per the `hyperframes/audio-reactive` skill | Pre-extract audio bands at upload time; window.AUDIO_DATA pattern. |
+| **Per-beat camera DSL** — beat.cameraMove already typed; translator emits the actual GSAP scale/translate tweens | Today cameraMove is metadata-only. Make it produce motion. |
+
+### MVP 5.0 — "the brand kit MVP"
+
+**Acceptance:** drop a `DESIGN.md` file at the start of a session,
+all subsequent compositions match the brand's visual system.
+
+| New work | Notes |
+|---|---|
+| **DESIGN.md import** — parse colors / fonts / voice → `brief.brand` | Schema fields (`brand.name`, `brand.primaryColor`, `brand.accentColor`, `brand.fontFamily`) already exist; just need a parser. |
+| **Brand pack registry** — DEFAULT_BRAND extended with per-brand presets (palettes, gradients) | Today's `brand-registry.ts` only has primaryColor; extend to full palette. |
+| **Translator brand-aware var rendering** — every text block can opt into brand font, brand color shadows, brand-tinted bg | Currently only the bg accent line uses brand color. |
+| **Validation rule** — brand-consistency (every beat uses brand palette ≥ X%) | Replaces today's brand-color-presence (≥30% of clips). |
+
+### Beyond MVP 5.0 — open questions
+
+- MP4 render (Inngest workflow + headless Chrome)
+- Multi-tenant Clerk + Postgres (M11 work)
+- Caption transcription (whisper)
+- Multi-pod harness state (Redis)
+- HeyGen avatar block
+- Subagents revisit (post-Mastra `prepareStep` shipping)
 
 ---
 

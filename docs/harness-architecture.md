@@ -208,7 +208,107 @@ ValidationReport = { ranAt, issues[], pass, attempts }
 | `check-storyboard`    | last in pipeline    | storyboard + composition | `state.validationReport`       |
 | `get-composition`     | inspect             | composition           | none                              |
 
-`add-clip`, `update-clip`, `remove-clip`, `add-transition` live in `tools-internal/` — the agent NEVER sees them. Only `create-beat` / `rebuild-beat` invoke them via the translator.
+`add-clip`, `update-clip`, `remove-clip` live in `tools-internal/` — the agent NEVER sees them. Only `create-beat` / `rebuild-beat` invoke them via the translator.
+
+## Catalog vs skills — what each is for
+
+Two things easily confused. They are not the same.
+
+```
+   ┌─────────────────────────────────────────────────────────────────┐
+   │                                                                 │
+   │   THE CATALOG  (the thing — block defs, code)                   │
+   │   ─────────────                                                 │
+   │   Lives in:  src/harness/services/clip-registry.service.ts      │
+   │   Shape:     21 blocks, each with                               │
+   │               id, name, category, description,                  │
+   │               template (HTML with {{vars}}), vars[]             │
+   │   Purpose:   the actual building material for a clip            │
+   │                                                                 │
+   │   ◄── Add or edit a block? Edit THIS file. That's it.           │
+   │                                                                 │
+   │                                                                 │
+   │   THE SKILLS  (markdown — how to PICK a block)                  │
+   │   ────────────                                                  │
+   │   Live in:  src/harness/director/skills/*/skill.md              │
+   │   Shape:    plain markdown guides                               │
+   │              storyboard.md → "use stats-callout for metrics"    │
+   │              design.md     → "vary blocks across beats"         │
+   │   Purpose:  give the agent rules for choosing IDs from the      │
+   │             catalog. Skills know block ids by NAME only.        │
+   │             They contain ZERO HTML and ZERO var defs.           │
+   │                                                                 │
+   │   ◄── Adding a block does NOT require touching any skill.       │
+   │                                                                 │
+   └─────────────────────────────────────────────────────────────────┘
+```
+
+Quick proof:
+- Delete the catalog → typecheck breaks, translator has nothing to render, the agent has zero blocks to pick from.
+- Delete a skill → typecheck still passes, the agent still works (it reads `list-blocks` at runtime); selection just gets sloppier without the variety advice.
+
+The registry is the bones; the skills are the bedside manner.
+
+## How the catalog actually flows through a turn
+
+Two callers read the registry — at different times, with different views:
+
+```
+   ┌──────────────────────────────────────────────────────────────────┐
+   │                                                                  │
+   │  1.  list-blocks tool (planning time, agent-facing)              │
+   │      ─────────────────                                           │
+   │      Director calls list-blocks while drafting the storyboard.   │
+   │                                                                  │
+   │      services.clipRegistry.getBlockSchemas()                     │
+   │           │                                                      │
+   │           ▼   strip template HTML, return                        │
+   │           id, name, category, description, varNames              │
+   │                                                                  │
+   │      Agent uses this to pick blockHints per beat.                │
+   │      ~80% smaller payload than the full catalog.                 │
+   │                                                                  │
+   │                                                                  │
+   │  2.  translator.ts (build time, server-side)                     │
+   │      ─────────────                                               │
+   │      create-beat → translator.translateBeat(...)                 │
+   │                                                                  │
+   │      services.clipRegistry.getBlockSchemas()                     │
+   │           │                                                      │
+   │           ▼   FULL view this time                                │
+   │           id, ..., template (HTML), vars[]                       │
+   │                                                                  │
+   │      pickPrimaryBlock(beat, catalog, storyboard)                 │
+   │           │                                                      │
+   │           ▼                                                      │
+   │      varsForBlock(block, beat, brief)                            │
+   │           │                                                      │
+   │           ▼                                                      │
+   │      renderBlock(block, vars) → final HTML                       │
+   │           │                                                      │
+   │           ▼                                                      │
+   │      addClip(...) → composition tree                             │
+   │                                                                  │
+   └──────────────────────────────────────────────────────────────────┘
+```
+
+End-to-end, what's read where:
+
+```
+   ┌──────────────────────────────┬───────────────────────────────────┐
+   │ Stage                        │ Reads                             │
+   ├──────────────────────────────┼───────────────────────────────────┤
+   │ Director plans storyboard    │ workflow + storyboard + design     │
+   │                              │ skills (markdown rules)            │
+   │ Director picks blockHints    │ list-blocks tool → slim catalog    │
+   │ Director commits storyboard  │ —                                 │
+   │ Director calls create-beat   │ —                                 │
+   │ Translator emits clips       │ services.clipRegistry directly →   │
+   │                              │ FULL catalog with template HTML    │
+   └──────────────────────────────┴───────────────────────────────────┘
+```
+
+The skills never touch HTML. The translator never reads markdown. They never overlap; they share only block ids as a referent.
 
 ## How the translator picks blocks
 

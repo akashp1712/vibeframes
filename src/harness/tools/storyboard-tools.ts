@@ -7,8 +7,6 @@ import {
   type Beat,
   type VibeFramesState,
 } from "../state";
-import type { HarnessServices } from "../services";
-import { createGetBlockSchemasTool } from "./get-block-schemas";
 
 const DURATION_TOLERANCE_MS = 500;
 
@@ -162,18 +160,7 @@ export function createReviseBeatTool() {
   });
 }
 
-/**
- * Tool registry for the Storyboard subagent. Receives services so it can
- * also expose `get-block-schemas` for the agent to browse the catalog
- * while planning beats.
- */
-export function createStoryboardTools(services: HarnessServices) {
-  // Re-uses the Director's get-block-schemas factory so there's a single
-  // source of truth for the catalog surface.
-  return {
-    "get-block-schemas": createGetBlockSchemasTool(services),
-    "propose-storyboard": createProposeStoryboardTool(),
-    "revise-beat": createReviseBeatTool(),
-    "commit-storyboard": createCommitStoryboardTool(),
-  };
-}
+// Storyboard tool factories are exported individually above and
+// registered in director/tools.ts. The legacy createStoryboardTools()
+// bundle was removed when the subagents architecture was deleted —
+// see git history if you need it.

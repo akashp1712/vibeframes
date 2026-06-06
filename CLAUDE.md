@@ -12,7 +12,7 @@ The build plan (`docs/meta/plan.md`) structures work as 13 modules (M0–M13). E
 
 **Current state (M10 in progress):** Single-agent Director walks brief → storyboard → compose → validate inside one user turn. Next.js 16 app, `/studio/[projectId]` route, full Vitest + RTL suite, light-mode-first design.
 
-> **Read this first when navigating the harness:** [`docs/architecture.md`](docs/architecture.md) is the single source of truth for how things glue together. It has the repo map, the pipeline diagram, and the "where do I edit X" table. If you're confused, that's where you should look (or fix).
+> **Read this first when navigating the harness:** [`docs/harness-architecture.md`](docs/harness-architecture.md) is the single source of truth for how things glue together. It has the repo map, the pipeline diagram, and the "where do I edit X" table. If you're confused, that's where you should look (or fix).
 
 For stricter contributor rules (TDD discipline, shadcn idioms, Zod-everywhere), read `AGENTS.md`. It is the source of truth for code conventions; this file is the higher-level execution protocol.
 
@@ -62,14 +62,14 @@ assets/{diagrams,inspiration}
 - **Spikes go in `experiments/`** — not in `src/`
 - **DB + Clerk deferred to M11** — M9 uses LibSQL file-db only
 - **MVP is all-local** — only external dep is `OPENAI_API_KEY`
-- **Out-of-scope** (`docs/meta/plan.md` §4): MP4 render, observational memory, multiplayer, HeyGen avatar block, MCP server, multi-pod state. (Subagents were briefly tried in M10 and rolled back — single-agent Director is the architecture; see `docs/architecture.md`.)
+- **Out-of-scope** (`docs/meta/plan.md` §4): MP4 render, observational memory, multiplayer, HeyGen avatar block, MCP server, multi-pod state. (Subagents were briefly tried in M10 and rolled back — single-agent Director is the architecture; see `docs/harness-architecture.md`.)
 - **No unsigned/unreviewed changes** to architecture docs without an ADR
 
 ## Architecture summary
 
 **user chat → `/api/chat` → `getVibeFramesHarness(projectId)` → ONE Director Agent runs brief → storyboard → compose → validate in one turn → SSE streams back → preview panel renders.**
 
-Read [`docs/architecture.md`](docs/architecture.md) for the full map. The short version:
+Read [`docs/harness-architecture.md`](docs/harness-architecture.md) for the full map. The short version:
 
 - **`src/harness/index.ts`** — singleton `Map<projectId, Harness>`. `yolo: true` because Vercel serverless can't host approval flows. Re-exports the public surface (Composition primitives, mutation helpers).
 - **`src/harness/state.ts`** — `VibeFramesStateSchema` (Zod): brief, storyboard, validationReport. Phase is *derived* from state, not stored.
