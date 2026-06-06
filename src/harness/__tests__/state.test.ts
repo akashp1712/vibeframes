@@ -43,8 +43,12 @@ describe("BriefSchema", () => {
     expect(() => BriefSchema.parse({ ...validBrief, arc: "saga" })).toThrow();
   });
 
-  it("rejects durationMs below 5_000ms", () => {
-    expect(() => BriefSchema.parse({ ...validBrief, durationMs: 4000 })).toThrow();
+  it("rejects durationMs below 2_000ms", () => {
+    expect(() => BriefSchema.parse({ ...validBrief, durationMs: 1000 })).toThrow();
+  });
+
+  it("accepts durationMs of 3_000ms (short clip)", () => {
+    expect(() => BriefSchema.parse({ ...validBrief, durationMs: 3000 })).not.toThrow();
   });
 
   it("rejects durationMs above 120_000ms", () => {

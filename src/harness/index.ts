@@ -3,6 +3,7 @@ import { Memory } from "@mastra/memory";
 import { openai } from "@ai-sdk/openai";
 import { VibeFramesStateSchema, createInitialState, type VibeFramesState } from "./state";
 import { createDirectorMode } from "./director/mode";
+import { createSingleAgentMode } from "./director-single/agent";
 import { createHarnessServices, type HarnessServices } from "./services";
 import { createHarnessStorage } from "./storage";
 import { briefSubagent } from "./subagents/brief/definition";
@@ -13,11 +14,29 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SKILLS_PATH = join(__dirname, "skills");
+// Two skill bundles. The legacy bundle (./skills) targets the
+// subagents architecture; the single-agent variant uses
+// ./director-single/skills. The factory below picks one based on
+// VIBEFRAMES_AGENT_MODE.
+const LEGACY_SKILLS_PATH = join(__dirname, "skills");
+const SINGLE_AGENT_SKILLS_PATH = join(__dirname, "director-single", "skills");
 
 export const services: HarnessServices = createHarnessServices();
-const directorMode = createDirectorMode(services);
 const instances = new Map<string, Harness<VibeFramesState>>();
+
+/**
+ * VIBEFRAMES_AGENT_MODE controls which Director architecture runs:
+ *   "subagents" (default) — current LLD-08 v1: Director + 4 subagents.
+ *   "single"             — LLD-08 v2 spike: one agent, dynamic tools
+ *                           by phase, workflow skill. Cheaper, faster.
+ *
+ * Both modes share the same state schema and tools; only the agent
+ * orchestration differs. We can flip the env var, restart, and the
+ * same /api/chat endpoint runs the alternate architecture.
+ */
+function getAgentMode(): "subagents" | "single" {
+  return process.env.VIBEFRAMES_AGENT_MODE === "single" ? "single" : "subagents";
+}
 
 /**
  * Resolve a model id (e.g. "openai/gpt-4o-mini") to a language model
@@ -42,17 +61,38 @@ export function createVibeFramesHarness(projectId: string) {
   const storage = createHarnessStorage();
   const memory = new Memory({ storage });
 
+  if (getAgentMode() === "single") {
+    // Single-agent variant: one Director, no subagents, dynamic tools
+    // gated by phase, fresh skill bundle. See director-single/.
+    return new Harness<VibeFramesState>({
+      id: "vibeframes",
+      resourceId: projectId,
+      stateSchema: VibeFramesStateSchema,
+      storage,
+      memory,
+      modes: [createSingleAgentMode(services)],
+      workspace: { skills: [SINGLE_AGENT_SKILLS_PATH] },
+      disableBuiltinTools: [
+        "task_write",
+        "task_check",
+        "task_complete",
+        "task_update",
+        "ask_user",
+        "submit_plan",
+        "subagent",
+      ],
+    });
+  }
+
+  // Legacy: subagents architecture.
   return new Harness<VibeFramesState>({
     id: "vibeframes",
     resourceId: projectId,
     stateSchema: VibeFramesStateSchema,
     storage,
     memory,
-    modes: [directorMode],
-    workspace: { skills: [SKILLS_PATH] },
-    // LLD-08 phase subagents. Each spawned by the Director via the
-    // auto-injected `subagent` tool. Full pipeline: brief → storyboard
-    // → compose → validate.
+    modes: [createDirectorMode(services)],
+    workspace: { skills: [LEGACY_SKILLS_PATH] },
     subagents: [
       briefSubagent,
       createStoryboardSubagent(services),

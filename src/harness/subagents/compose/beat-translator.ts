@@ -60,6 +60,7 @@ export function computeBeatStartMs(storyboard: Storyboard, beatIndex: number): n
 function pickPrimaryBlock(
   beat: Beat,
   catalog: HyperFramesBlock[],
+  storyboard: Storyboard,
 ): HyperFramesBlock {
   const byId = new Map(catalog.map((b) => [b.id, b]));
 
@@ -78,7 +79,8 @@ function pickPrimaryBlock(
     if (block && block.id !== "background-fill") return block;
   }
 
-  // 2. Fallback by shot type
+  // 2. Concept keyword routing — only when the keyword is a real signal,
+  // not a vague match on shotType.
   const concept = beat.concept.toLowerCase();
   const stats = byId.get("stats-callout");
   const heroTitle = byId.get("hero-title");
@@ -88,7 +90,11 @@ function pickPrimaryBlock(
   const endCard = byId.get("end-card");
   const quote = byId.get("quote-pull");
 
-  if (concept.includes("number") || concept.includes("metric") || concept.includes("stat")) {
+  // Stats-callout only when concept names a NUMBER explicitly.
+  if (
+    /\d+%|\d+x|\d+×|metric|callout/.test(concept) ||
+    /\bstat(s|istic)?\b/.test(concept)
+  ) {
     if (stats) return stats;
   }
   if (concept.includes("quote") || concept.includes("testimonial")) {
@@ -97,13 +103,23 @@ function pickPrimaryBlock(
   if (concept.includes("cta") || concept.includes("call to action") || concept.includes("sign up")) {
     if (cta) return cta;
   }
-  if (concept.includes("close") || concept.includes("end") || concept.includes("outro")) {
+  if (concept.includes("close") || concept.includes("end") || concept.includes("outro") || concept.includes("closer")) {
     if (endCard) return endCard;
   }
   if (concept.includes("staccato") || concept.includes("punchy") || concept.includes("kinetic")) {
     if (kineticWords) return kineticWords;
   }
 
+  // 3. Position-aware fallback. The first and last beats in the
+  // storyboard have natural roles (opener / closer) regardless of
+  // shotType — surface those first so atmospheric "extreme-close"
+  // openers don't all become stats-callout.
+  const isFirst = beat.index === 1;
+  const isLast = beat.index === storyboard.beats.length;
+  if (isFirst && heroTitle) return heroTitle;
+  if (isLast && endCard) return endCard;
+
+  // 4. Shot-type fallback for middle beats.
   switch (beat.shotType) {
     case "extreme-close":
       return stats ?? heroTitle ?? catalog[0]!;
@@ -224,48 +240,74 @@ function brandAccent(brief: Brief): string {
 
 /**
  * Project a beat's concept into vars for the picked primary block.
- * Strategy: short, evocative copy derived from the concept and the brief.
- * Real LLM-generated copy belongs in the Storyboard prompt's voCue/concept;
- * here we just render what the storyboard already implies.
+ *
+ * Important: the beat's `concept` is the STORYBOARD'S internal
+ * description for the agent ("Spark in darkness — moment before the
+ * brand emerges") — it is NOT user-facing copy. Slicing it into
+ * headline vars produces sentence fragments like "Spark in darkness —
+ * moment before". The user sees that and rightly judges it as broken.
+ *
+ * Better strategy:
+ *   - hero/title vars: prefer brand.name first, fall back to a
+ *     headline-quality slice of brief.message (the value prop), then
+ *     the beat's voCue (which the Storyboard skill instructs the
+ *     agent to write as user-facing copy), then short concept.
+ *   - tagline/subheading vars: prefer voCue, fall back to brief.message.
+ *   - "label" / lower-third vars where the concept genuinely IS the
+ *     description: keep the conceptShort.
+ *
+ * Real fix long-term: have the Storyboard subagent write `headline`
+ * and `subheading` vars per beat alongside concept. But we don't have
+ * those fields yet, so this heuristic gets us most of the way.
  */
 function varsForBlock(block: HyperFramesBlock, beat: Beat, brief: Brief): Record<string, string> {
   const conceptShort = beat.concept.replace(/\.$/, "");
   const brandName = brief.brand.name ?? "Brand";
+  const messageHeadline = headlineFromMessage(brief.message);
+  const voCue = beat.voCue?.trim().replace(/\.$/, "") ?? "";
 
   switch (block.id) {
     case "hero-title":
-      // Pull a 1-4 word headline from the concept (first dash-separated chunk
-      // or first 4 words) — the Storyboard concept tends to lead with the idea.
-      return { title: shortHeadline(conceptShort, 4) };
+      // Brand name → message headline → voCue → fallback. NEVER the raw
+      // concept, which is internal storyboard prose.
+      return {
+        title: brandName !== "Brand" ? brandName : messageHeadline || voCue || "Hello",
+      };
 
     case "kinetic-words": {
-      const words = conceptShort.split(/\s+/).slice(0, 3);
+      // Three punchy words. Prefer voCue if it's short; else brand+verb+now.
+      const source = voCue && voCue.split(/\s+/).length <= 6 ? voCue : messageHeadline;
+      const words = source.split(/\s+/).slice(0, 3);
       while (words.length < 3) words.push("Now");
       return { word1: words[0]!, word2: words[1]!, word3: words[2]! };
     }
 
-    case "stats-callout":
+    case "stats-callout": {
+      // The number must come from the concept (the agent put it there
+      // intentionally). The label is the short concept.
+      const num = extractNumber(conceptShort) ?? extractNumber(brief.message) ?? "10×";
       return {
-        number: extractNumber(conceptShort) ?? "100×",
+        number: num,
         label: shortHeadline(conceptShort, 6),
       };
+    }
 
     case "quote-pull":
       return {
-        quote: conceptShort,
+        quote: voCue || brief.message,
         attribution: brandName,
       };
 
     case "split-screen":
       return {
-        heading: shortHeadline(conceptShort, 6),
-        subheading: conceptShort,
+        heading: messageHeadline || shortHeadline(brandName, 4),
+        subheading: voCue || brief.message,
         accent: "✦",
       };
 
     case "cta-button":
       return {
-        headline: shortHeadline(conceptShort, 6),
+        headline: voCue || messageHeadline,
         cta: brief.narration === "none" ? "Get started" : "Try it",
       };
 
@@ -299,6 +341,27 @@ function varsForBlock(block: HyperFramesBlock, beat: Beat, brief: Brief): Record
   }
 }
 
+/**
+ * Distill a value-prop sentence into a headline-quality fragment.
+ *
+ * Rules:
+ *   - Drop a leading subject if it's the brand name (so "Linear ships
+ *     fast because it gets out of your way" → "ships fast").
+ *   - Take up to 4-5 words.
+ *   - Strip trailing punctuation.
+ */
+function headlineFromMessage(message: string): string {
+  if (!message) return "";
+  // Strip a leading "<word> verbs" pattern; keep the verb-phrase.
+  // E.g. "Linear ships fast" → "ships fast"; "Stripe makes accepting payments simple" → "makes accepting payments"
+  const words = message.replace(/[.!?]$/, "").split(/\s+/);
+  if (words.length <= 4) return words.join(" ");
+  // If the first word is uppercase (likely a brand), drop it.
+  const first = words[0]!;
+  const rest = /^[A-Z][a-zA-Z]+$/.test(first) && words.length > 4 ? words.slice(1) : words;
+  return rest.slice(0, 4).join(" ");
+}
+
 function shortHeadline(text: string, maxWords: number): string {
   const words = text.split(/\s+/);
   return words.slice(0, maxWords).join(" ");
@@ -324,7 +387,7 @@ export function translateBeat(opts: {
 
   const bgClass = bgClassForBrand(brief);
   const bgBlock = catalog.find((b) => b.id === "background-fill")!;
-  const primaryBlock = pickPrimaryBlock(beat, catalog);
+  const primaryBlock = pickPrimaryBlock(beat, catalog, storyboard);
 
   // Wrap the bg HTML in a relative container so the brand accent overlay
   // can be absolutely positioned over it. Empty accent → wrapper still

@@ -132,7 +132,7 @@ export const BriefSchema = z.object({
   /** Frame aspect / platform. */
   format: z.enum(["landscape", "portrait", "square"]),
   /** Total runtime in milliseconds. Drives storyboard beat-duration sum. */
-  durationMs: z.number().int().min(5_000).max(120_000),
+  durationMs: z.number().int().min(2_000).max(120_000),
   /** Whether the agent should plan voiceover. */
   narration: z.enum(["full", "minimal", "none"]),
   /** Free-text style cues from the user — "dark cinematic", "punchy social". */

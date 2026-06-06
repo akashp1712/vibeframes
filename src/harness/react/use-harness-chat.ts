@@ -165,6 +165,43 @@ export function useHarnessChat(projectId: string) {
                 break;
               }
 
+              // LLD-08 progressive render: surface every subagent tool
+              // call as a synthetic tool entry on the assistant message
+              // so useComposition can react in real time. Without this
+              // the studio preview would only update after the entire
+              // pipeline completes — Compose's per-beat create-beat
+              // results carry compositionHtml that we want to stream.
+              case "subagent_tool_start": {
+                const subId = `${payload.toolCallId}::${payload.subToolName}::${payload.startedAt ?? Date.now()}` as string;
+                const subToolName = payload.subToolName as string;
+                const subToolArgs = (payload.subToolArgs as Record<string, unknown>) ?? {};
+                toolStarts.set(subId, Date.now());
+                setActiveToolName(`${payload.agentType}/${subToolName}`);
+                updateAssistant(assistantMsgId, (m) => ({
+                  ...m,
+                  tools: [
+                    ...(m.tools ?? []),
+                    { id: subId, name: subToolName, state: "calling", args: subToolArgs },
+                  ],
+                }));
+                break;
+              }
+
+              case "subagent_tool_end": {
+                const baseId = `${payload.toolCallId}::${payload.subToolName}` as string;
+                const subToolResult = payload.subToolResult;
+                const isErr = payload.isError === true;
+                updateAssistant(assistantMsgId, (m) => ({
+                  ...m,
+                  tools: (m.tools ?? []).map((t) =>
+                    typeof t.id === "string" && t.id.startsWith(baseId)
+                      ? { ...t, state: isErr ? "error" : "result", result: subToolResult }
+                      : t
+                  ),
+                }));
+                break;
+              }
+
               case "run.complete":
                 setStatus("done");
                 break;

@@ -134,6 +134,13 @@ function buildSrcDoc(html: string): string {
     }
   });
 
+  // Pin the timeline length to the composition's intended duration.
+  // GSAP's intrinsic length is the latest tween's end (~last clip's
+  // fade-in finish), which truncates everything after. Without this
+  // hold, repeat:-1 loops every ~1.5s instead of the full 12s.
+  // A zero-duration call at \`total\` anchors the timeline length.
+  tl.call(() => {}, [], total);
+
   const scrub = document.getElementById('scrub');
   scrub.max = total;
   document.getElementById('play').onclick = () => tl.play();

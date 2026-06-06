@@ -1,5 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { BriefSchema, type VibeFramesState } from "../../state";
+import { safeHexColor } from "../compose/beat-translator";
+import { lookupBrand, DEFAULT_BRAND } from "../../brand-registry";
 
 /**
  * `commit-brief` writes the strategic brief to harness state. The Brief
@@ -27,10 +29,32 @@ export function createCommitBriefTool() {
           }
         | undefined;
 
-      // Re-parse to apply Zod defaults (e.g. brand: {}) — the inputSchema
-      // type is the input shape (with optional fields); harness state
-      // expects the output shape with defaults applied.
-      const brief = BriefSchema.parse(input);
+      // Re-parse to apply Zod defaults (e.g. brand: {}).
+      const parsed = BriefSchema.parse(input);
+      // Resolve brand colors with three-tier fallback:
+      //   1. Use the LLM's hex if it's clean (safeHexColor passes).
+      //   2. If the LLM's value is malformed (e.g. "#5E6AD2}}" trailing
+      //      garbage from a streaming-JSON glitch) BUT brand.name matches
+      //      a known brand in our registry, use the canonical hex.
+      //   3. If brand.name is unknown too, fall back to DEFAULT_BRAND
+      //      (violet) so the validator's brand-color-presence rule
+      //      always has something to find. The user can override with
+      //      a follow-up edit.
+      const known = lookupBrand(parsed.brand.name);
+      const primaryColor =
+        safeHexColor(parsed.brand.primaryColor) ??
+        known?.primaryColor ??
+        DEFAULT_BRAND.primaryColor;
+      const accentColor =
+        safeHexColor(parsed.brand.accentColor) ?? known?.accentColor;
+      const brief = {
+        ...parsed,
+        brand: {
+          ...parsed.brand,
+          primaryColor,
+          accentColor,
+        },
+      };
 
       if (!harnessCtx) {
         // No harness context — running in a unit test or detached. Return
