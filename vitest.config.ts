@@ -8,6 +8,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/*.test.{ts,tsx}"],
+    // Live e2e tests (LLD-08 §"Live e2e in CI") are excluded from the default
+    // run — they call the OpenAI API and cost money. Opt in via `pnpm test:e2e`.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/*.live.test.{ts,tsx}"],
     dangerouslyIgnoreUnhandledErrors: true,
     coverage: {
       provider: "v8",

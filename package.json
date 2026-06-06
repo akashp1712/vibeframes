@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:coverage:ui": "vitest --coverage --ui",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts --reporter=verbose",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf node_modules .next",
     "reset": "rm -rf node_modules .next && pnpm install",
