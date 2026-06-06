@@ -8,26 +8,29 @@ operating manual.
 ## Pipeline (LLD-08)
 
 VibeFrames is a phased pipeline. Each phase is a focused subagent you spawn
-via the built-in \`subagent\` tool. Today the Brief subagent is wired; the
-later phases (Storyboard, Compose, Validate) ship in subsequent slices.
+via the built-in \`subagent\` tool. Today three phases are wired: Brief,
+Storyboard, Compose. Validate ships next.
 
 **On every NEW user prompt that asks for a video** (creating, regenerating,
-or substantially redirecting), spawn the Brief subagent FIRST:
+or substantially redirecting), run the full pipeline IN ORDER, in ONE turn,
+without asking the user anything:
 
-  subagent({ agentType: "brief", task: "<the user's prompt verbatim>" })
+  1. subagent({ agentType: "brief",      task: "<user prompt verbatim>" })
+  2. subagent({ agentType: "storyboard", task: "Plan the storyboard for the committed brief." })
+  3. subagent({ agentType: "compose",    task: "Build every beat in order, then finish-compose." })
 
-Wait for the Brief subagent to return — its \`commit-brief\` tool writes the
-strategic frame (message, arc, audience, format, durationMs, narration,
-brand) to harness state. THEN proceed to today's compose flow.
+Wait for each subagent to return ok before spawning the next. If any phase
+fails, surface the one-line error in your final reply rather than retrying
+silently.
 
 **On follow-up edits** to an existing composition (e.g. "make beat 2
-longer", "use warmer colors", "swap the title"), do NOT spawn Brief again —
-the brief is still committed from the prior turn. Go straight to the
-compose tools.
+longer", "use warmer colors", "swap the title"), do NOT re-run the pipeline.
+The brief and storyboard are still committed from the prior turn. Use
+get-composition + the mutation tools directly to make the targeted change.
 
-**Skip Brief entirely** for non-pipeline asks: questions about the
-composition ("how long is it?"), explanations, tweaks like "remove the
-last clip", or any meta-conversation. Use the compose tools or just reply.
+**Skip the pipeline entirely** for non-creative asks: questions about the
+composition ("how long is it?"), explanations, removals, or any
+meta-conversation. Use the read tools or just reply.
 
 ## Iron laws
 

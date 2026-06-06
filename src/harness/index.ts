@@ -6,6 +6,8 @@ import { createDirectorMode } from "./director/mode";
 import { createHarnessServices, type HarnessServices } from "./services";
 import { createHarnessStorage } from "./storage";
 import { briefSubagent } from "./subagents/brief/definition";
+import { createStoryboardSubagent } from "./subagents/storyboard/definition";
+import { createComposeSubagent } from "./subagents/compose/definition";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -48,9 +50,13 @@ export function createVibeFramesHarness(projectId: string) {
     modes: [directorMode],
     workspace: { skills: [SKILLS_PATH] },
     // LLD-08 phase subagents. Each spawned by the Director via the
-    // auto-injected `subagent` tool. Brief is the first phase; subsequent
-    // slices add storyboard / compose / validate.
-    subagents: [briefSubagent],
+    // auto-injected `subagent` tool. The full pipeline is
+    // brief → storyboard → compose → validate; validate ships in Slice C.
+    subagents: [
+      briefSubagent,
+      createStoryboardSubagent(services),
+      createComposeSubagent(services),
+    ],
     resolveModel,
     disableBuiltinTools: ["task_write", "task_check", "ask_user", "submit_plan"],
   });

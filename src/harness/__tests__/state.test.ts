@@ -91,9 +91,14 @@ describe("VibeFramesStateSchema", () => {
 });
 
 describe("createInitialState", () => {
-  it("seeds projectId, yolo:true, brief:null", () => {
+  it("seeds projectId, yolo:true, brief:null, storyboard:null", () => {
     const initial = createInitialState("proj-42");
-    expect(initial).toEqual({ projectId: "proj-42", yolo: true, brief: null });
+    expect(initial).toEqual({
+      projectId: "proj-42",
+      yolo: true,
+      brief: null,
+      storyboard: null,
+    });
   });
 
   it("respects explicit yolo:false", () => {
