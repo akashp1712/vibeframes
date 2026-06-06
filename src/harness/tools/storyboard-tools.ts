@@ -6,9 +6,9 @@ import {
   type Storyboard,
   type Beat,
   type VibeFramesState,
-} from "../../state";
-import type { HarnessServices } from "../../services";
-import { createGetBlockSchemasTool } from "../../tools/get-block-schemas";
+} from "../state";
+import type { HarnessServices } from "../services";
+import { createGetBlockSchemasTool } from "./get-block-schemas";
 
 const DURATION_TOLERANCE_MS = 500;
 

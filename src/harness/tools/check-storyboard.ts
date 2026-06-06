@@ -4,9 +4,9 @@ import {
   ValidationReportSchema,
   type ValidationReport,
   type VibeFramesState,
-} from "../../state";
-import { getComposition } from "../../composition/store";
-import { runAllRules } from "./rules";
+} from "../state";
+import { getComposition } from "../composition/store";
+import { runAllRules } from "../composition/validation-rules";
 
 type HarnessCtx = {
   getState: () => VibeFramesState;

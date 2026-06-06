@@ -4,9 +4,9 @@ import {
   safeHexColor,
   translateBeat,
   translateStoryboard,
-} from "../beat-translator";
-import { createHarnessServices } from "../../../services";
-import type { Beat, Brief, Storyboard } from "../../../state";
+} from "../translator";
+import { createHarnessServices } from "../../services";
+import type { Beat, Brief, Storyboard } from "../../state";
 
 const services = createHarnessServices();
 const catalog = services.clipRegistry.getBlockSchemas();

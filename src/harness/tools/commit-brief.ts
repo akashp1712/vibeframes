@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core/tools";
-import { BriefSchema, type VibeFramesState } from "../../state";
-import { safeHexColor } from "../compose/beat-translator";
-import { lookupBrand, DEFAULT_BRAND } from "../../brand-registry";
+import { BriefSchema, type VibeFramesState } from "../state";
+import { safeHexColor } from "../composition/translator";
+import { lookupBrand, DEFAULT_BRAND } from "../brand-registry";
 
 /**
  * `commit-brief` writes the strategic brief to harness state. The Brief

@@ -17,8 +17,8 @@
  * what a switch can express, swap the body for a small LLM call inside
  * the tool — the function signature stays the same.
  */
-import type { Brief, Beat, Storyboard } from "../../state";
-import type { ClipRegistryService, HyperFramesBlock } from "../../services/types";
+import type { Brief, Beat, Storyboard } from "../state";
+import type { ClipRegistryService, HyperFramesBlock } from "../services/types";
 
 export interface BeatTranslation {
   /** Where in the timeline this beat lives. */

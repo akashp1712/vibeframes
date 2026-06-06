@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { createCommitBriefTool } from "../tools";
-import type { Brief, VibeFramesState } from "../../../state";
+import { createCommitBriefTool } from "../commit-brief";
+import type { Brief, VibeFramesState } from "../../state";
 
 /**
  * Stub harness context — mimics the subset of the real Mastra harnessCtx

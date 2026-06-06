@@ -4,13 +4,13 @@ import {
   createReviseBeatTool,
   createRebuildBeatTool,
   createFinishComposeTool,
-} from "../tools";
-import { createHarnessServices } from "../../../services";
-import type { Beat, Brief, Storyboard, VibeFramesState } from "../../../state";
+} from "../compose-tools";
+import { createHarnessServices } from "../../services";
+import type { Beat, Brief, Storyboard, VibeFramesState } from "../../state";
 import {
   __resetCompositionStoreForTests,
   getComposition,
-} from "../../../composition/store";
+} from "../../composition/store";
 
 const services = createHarnessServices();
 

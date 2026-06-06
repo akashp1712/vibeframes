@@ -5,12 +5,12 @@ import {
   type Beat,
   type Storyboard,
   type VibeFramesState,
-} from "../../state";
-import type { HarnessServices } from "../../services";
-import { addClip, removeClip } from "../../composition/mutations";
-import { getComposition, setComposition } from "../../composition/store";
-import { serialize } from "../../composition/serialize";
-import { translateBeat } from "./beat-translator";
+} from "../state";
+import type { HarnessServices } from "../services";
+import { addClip, removeClip } from "../composition/mutations";
+import { getComposition, setComposition } from "../composition/store";
+import { serialize } from "../composition/serialize";
+import { translateBeat } from "../composition/translator";
 
 type HarnessCtx = {
   getState: () => VibeFramesState;

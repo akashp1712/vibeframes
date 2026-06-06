@@ -10,7 +10,9 @@ VibeFrames is a chat-first AI video studio built on Mastra Harness + HyperFrames
 
 The build plan (`docs/meta/plan.md`) structures work as 13 modules (M0–M13). Each module ships docs, code, and a journal entry. Module N depends on N-1 being consistent. Current progress is tracked in `docs/README.md`.
 
-**Current state (M9 complete):** Harness loop is end-to-end. Next.js 16 app with landing page and `/studio/[projectId]` route, working `Harness<VibeFramesState>` (single Director mode) backed by LibSQL, SSE chat route, composition mutations + serialize → HyperFrames, full Vitest + RTL suite, GitHub Actions CI, light-mode-first design.
+**Current state (M10 in progress):** Single-agent Director walks brief → storyboard → compose → validate inside one user turn. Next.js 16 app, `/studio/[projectId]` route, full Vitest + RTL suite, light-mode-first design.
+
+> **Read this first when navigating the harness:** [`docs/architecture.md`](docs/architecture.md) is the single source of truth for how things glue together. It has the repo map, the pipeline diagram, and the "where do I edit X" table. If you're confused, that's where you should look (or fix).
 
 For stricter contributor rules (TDD discipline, shadcn idioms, Zod-everywhere), read `AGENTS.md`. It is the source of truth for code conventions; this file is the higher-level execution protocol.
 
@@ -60,31 +62,33 @@ assets/{diagrams,inspiration}
 - **Spikes go in `experiments/`** — not in `src/`
 - **DB + Clerk deferred to M11** — M9 uses LibSQL file-db only
 - **MVP is all-local** — only external dep is `OPENAI_API_KEY`
-- **Out-of-scope** (`docs/meta/plan.md` §4): MP4 render, observational memory, subagents, multiplayer, HeyGen avatar block, MCP server, multi-pod state
+- **Out-of-scope** (`docs/meta/plan.md` §4): MP4 render, observational memory, multiplayer, HeyGen avatar block, MCP server, multi-pod state. (Subagents were briefly tried in M10 and rolled back — single-agent Director is the architecture; see `docs/architecture.md`.)
 - **No unsigned/unreviewed changes** to architecture docs without an ADR
 
 ## Architecture summary
 
-**user chat → `/api/chat` route → `getVibeFramesHarness(projectId)` → Director mode → tool calls mutate composition → SSE events stream back → client applies delta → `<hyperframes-player>` re-renders**
+**user chat → `/api/chat` → `getVibeFramesHarness(projectId)` → ONE Director Agent runs brief → storyboard → compose → validate in one turn → SSE streams back → preview panel renders.**
 
-Key modules in `src/harness/`:
+Read [`docs/architecture.md`](docs/architecture.md) for the full map. The short version:
 
-- **`index.ts`** — singleton `Map<projectId, Harness>` with `createVibeFramesHarness` / `getVibeFramesHarness`. `yolo: true` is set in initial state because Vercel's serverless runtime can't host stateful approval flows.
-- **`state.ts` / `types.ts`** — `VibeFramesStateSchema` (Zod). All harness state, tool params, and API payloads must be Zod-validated.
-- **`mode.ts`** — single `Director` mode (the dual plan/vibe split described in `docs/04-our-harness-vhld.md` collapsed during M9; do not reintroduce without an ADR).
-- **`tools/`** — `add-clip`, `update-clip`, `remove-clip`, `add-transition`, `get-composition`, `get-block-schemas`, `get-transition-schemas`. Tools mutate the composition tree and emit `composition.delta` SSE events.
-- **`mutations.ts`** — pure functions on the composition tree (used by tools, never call Harness state directly from UI).
-- **`serialize.ts`** — `jsonTree → HyperFrames HTML`.
-- **`storage.ts`** — LibSQL store; `VIBEFRAMES_DB_URL` + `VIBEFRAMES_DB_AUTH_TOKEN` swap to Turso.
-- **`skills/`** — runtime markdown skills the Mastra agent reads each turn. **Different from `.agents/skills/`** — those are reference-only for coding agents (see `AGENTS.md` §Skills).
-- **`use-composition.ts` / `use-harness-chat.ts`** — React hooks that bridge SSE events to the studio panels.
+- **`src/harness/index.ts`** — singleton `Map<projectId, Harness>`. `yolo: true` because Vercel serverless can't host approval flows. Re-exports the public surface (Composition primitives, mutation helpers).
+- **`src/harness/state.ts`** — `VibeFramesStateSchema` (Zod): brief, storyboard, validationReport. Phase is *derived* from state, not stored.
+- **`src/harness/director/`** — the single agent. `agent.ts` (Mastra wiring) + `prompt.ts` (state-aware) + `tools.ts` (registry) + `skills/` (workflow / brief / storyboard / design / validate).
+- **`src/harness/composition/`** — the artifact: `schema.ts`, `mutations.ts` (pure ops), `store.ts` (disk-backed), `serialize.ts` (jsonTree → HTML), `translator.ts` (beat → clip mutations — the heart of Compose), `validation-rules.ts`.
+- **`src/harness/services/clip-registry.service.ts`** — the **block catalog**. Add new blocks here.
+- **`src/harness/tools/`** — agent-facing tools (`commit-brief`, `commit-storyboard`, `create-beat`, `check-storyboard`, `list-blocks`, etc.). `tools-internal/` holds low-level mutation primitives the agent never sees.
+- **`src/harness/react/`** — `useHarnessChat` (POST /api/chat + SSE stream) and `useComposition` (derive ClipInfo[] from messages).
+- **`src/harness/brand-registry.ts`** — canonical hex codes for known brands (Linear, Stripe, …); fallback when LLM emits malformed hex.
 
-Stack: Next.js 16 · React 19 · Tailwind v4 · shadcn/ui (base-nova) · MagicUI · AI SDK v4 · `@mastra/core` · OpenAI `o4-mini` · LibSQL (file-db today; Turso for serverless; PgStore in M11). Chat transport is SSE per ADR-001 — do not switch to WebSockets without a new ADR.
+Stack: Next.js 16 · React 19 · Tailwind v4 · shadcn/ui (base-nova) · MagicUI · AI SDK v4 · `@mastra/core` · OpenAI `gpt-4o-mini` (override via `VIBEFRAMES_MODEL`) · LibSQL. Chat transport is SSE per ADR-001.
 
 ## Things that bite
 
 - **Tools must be Zod-typed in and out.** Untyped tool params silently break the agent loop.
 - **Don't bypass `getVibeFramesHarness`.** Constructing a fresh `Harness` per request thrashes LibSQL and loses memory.
-- **Coverage thresholds in `vitest.config.ts` are intentionally off** until the harness loop is feature-complete (see the comment in that file). Don't re-enable without coordinating — many `tools/`, `app/api/`, and `studio/` files are 0% by design.
+- **Catalog data lives in `services/clip-registry.service.ts`**, not in any markdown skill. To add/edit a block: edit that file. The agent reads `list-blocks` (slim catalog: id+description+vars, no template HTML) at runtime, so the description there is what guides selection.
+- **The agent NEVER sees `add-clip` / `update-clip` / `remove-clip`.** Those live in `tools-internal/` and are called only by `composition/translator.ts`. Don't expose them to the Director — that breaks the discipline that the translator owns clip emission.
+- **The translator's `varsForBlock` does NOT use `beat.concept`** as user-facing copy. The concept is internal storyboard prose; headline copy comes from `brief.brand.name`, `headlineFromMessage(brief.message)`, or `beat.voCue`.
+- **Coverage thresholds in `vitest.config.ts` are intentionally off** until the harness loop is feature-complete. Don't re-enable without coordinating.
 - **Path alias `@/*` → `src/*`** (defined in `tsconfig.json` and mirrored in `vitest.config.ts`). Use it; relative `../../../` paths are not the convention.
 - **Light mode is the default** (root `<html>` has no `dark` class). Use semantic tokens (`bg-primary`, `text-muted-foreground`) — never raw hex or `bg-blue-500`.

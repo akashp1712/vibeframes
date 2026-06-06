@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { createCommitStoryboardTool } from "../tools";
-import type { Beat, Brief, Storyboard, VibeFramesState } from "../../../state";
+import { createCommitStoryboardTool } from "../storyboard-tools";
+import type { Beat, Brief, Storyboard, VibeFramesState } from "../../state";
 
 const validBrief: Brief = {
   message: "Linear ships fast because it gets out of your way.",

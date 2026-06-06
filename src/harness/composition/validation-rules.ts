@@ -15,8 +15,8 @@
  *
  * Add rules empirically as we ship videos and notice patterns.
  */
-import type { Brief, Storyboard, ValidationIssue } from "../../state";
-import type { Composition } from "../../composition/schema";
+import type { Brief, Storyboard, ValidationIssue } from "../state";
+import type { Composition } from "./schema";
 
 const DURATION_TOLERANCE_MS = 500;
 

@@ -6,9 +6,9 @@ import {
   consecutiveBlockRepeat,
   brandColorPresence,
   runAllRules,
-} from "../rules";
-import type { Beat, Brief, Storyboard } from "../../../state";
-import type { Composition } from "../../../composition/schema";
+} from "../validation-rules";
+import type { Beat, Brief, Storyboard } from "../../state";
+import type { Composition } from "../schema";
 
 const brief: Brief = {
   message: "Linear ships fast.",
