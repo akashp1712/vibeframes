@@ -84,6 +84,36 @@ export const StoryboardSchema = z.object({
 export type Storyboard = z.infer<typeof StoryboardSchema>;
 
 /**
+ * Validation issue — a single finding from a validation rule.
+ *
+ * Severity policy:
+ *   error    → pipeline fails; Director should re-spawn Compose with the
+ *              issues as guidance (max 2 retries before shipping with errors)
+ *   warning  → ship anyway; surface in final reply
+ *   info     → silent in reply but visible in the report
+ */
+export const ValidationIssueSchema = z.object({
+  severity: z.enum(["error", "warning", "info"]),
+  beatIndex: z.number().int().nullable(),
+  rule: z.string(),
+  message: z.string(),
+});
+export type ValidationIssue = z.infer<typeof ValidationIssueSchema>;
+
+export const ValidationReportSchema = z.object({
+  ranAt: z.number(),
+  issues: z.array(ValidationIssueSchema),
+  pass: z.boolean(),
+  /**
+   * Number of times Compose has been retried for this run. Starts at 0;
+   * Director increments before re-spawning Compose. Caps at 2 — third
+   * failure ships with errors surfaced in the final reply.
+   */
+  attempts: z.number().int().min(0).default(0),
+});
+export type ValidationReport = z.infer<typeof ValidationReportSchema>;
+
+/**
  * Brief — the strategic frame the user gave us. Captured by the Brief
  * subagent (LLD-08) before any storyboard or composition work happens.
  *
@@ -134,6 +164,11 @@ export const VibeFramesStateSchema = z.object({
    * `commit-storyboard` tool. Null until phase 2 completes.
    */
   storyboard: StoryboardSchema.nullable().default(null),
+  /**
+   * Validation report (LLD-08 phase 4). Set by the Validate subagent's
+   * `check-storyboard` tool. Null until phase 4 has run at least once.
+   */
+  validationReport: ValidationReportSchema.nullable().default(null),
 });
 
 export type VibeFramesState = z.infer<typeof VibeFramesStateSchema>;
@@ -150,5 +185,6 @@ export function createInitialState(projectId: string, yolo: boolean = true): Vib
     yolo,
     brief: null,
     storyboard: null,
+    validationReport: null,
   };
 }

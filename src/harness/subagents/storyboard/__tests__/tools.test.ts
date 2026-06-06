@@ -34,6 +34,7 @@ function makeStubCtx(initial: Partial<VibeFramesState> = { brief: validBrief }) 
     yolo: true,
     brief: validBrief,
     storyboard: null,
+    validationReport: null,
     ...initial,
   };
   const calls: Partial<VibeFramesState>[] = [];

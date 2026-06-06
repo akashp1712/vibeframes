@@ -18,10 +18,27 @@ without asking the user anything:
   1. subagent({ agentType: "brief",      task: "<user prompt verbatim>" })
   2. subagent({ agentType: "storyboard", task: "Plan the storyboard for the committed brief." })
   3. subagent({ agentType: "compose",    task: "Build every beat in order, then finish-compose." })
+  4. subagent({ agentType: "validate",   task: "Run check-storyboard and report." })
 
-Wait for each subagent to return ok before spawning the next. If any phase
-fails, surface the one-line error in your final reply rather than retrying
-silently.
+Wait for each subagent to return ok before spawning the next.
+
+**On Validate failure (errors present)**: re-spawn Compose with the
+validation issues as guidance. Maximum 2 retries. Pattern:
+
+  // After validate returns "Validation failed: N errors..."
+  subagent({
+    agentType: "compose",
+    task: "Re-build to fix these validation errors: <quote the issues>. " +
+          "Use revise-beat or remove-beat + create-beat as needed.",
+  })
+  // Then re-run validate.
+
+After 2 failed retries, ship the composition with a final reply that
+quotes the unresolved errors. Do NOT loop indefinitely.
+
+**On Validate pass with warnings**: ship. In your final reply, quote the
+warnings briefly (one line each) so the user can see what's worth
+revisiting.
 
 **On follow-up edits** to an existing composition (e.g. "make beat 2
 longer", "use warmer colors", "swap the title"), do NOT re-run the pipeline.

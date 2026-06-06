@@ -13,6 +13,7 @@ function makeStubHarnessCtx(initial: Partial<VibeFramesState> = {}) {
     yolo: true,
     brief: null,
     storyboard: null,
+    validationReport: null,
     ...initial,
   };
   const setStateCalls: Partial<VibeFramesState>[] = [];
