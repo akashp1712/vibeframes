@@ -1,11 +1,24 @@
 # LLD-08 · Phased Director — Director + four phase subagents (YOLO, single-turn)
 
-Status: Proposed (spike validated 2026-06-06)
-Owner: VibeFrames
-Last updated: 2026-06-06
-Related: LLD-05 (harness deep-dive), LLD-09 (cleanup), ADR-001 (SSE), `.agents/skills/website-to-hyperframes/`
+> **Status: SUPERSEDED (2026-06-06)** — subagents shipped briefly in M10 then rolled back.
+> The runtime SSOT is **[`docs/harness-architecture.md`](../harness-architecture.md)** (single Director, no subagents).
+> This doc is preserved for the *why* — the spike, the rollback, and what remains relevant if subagents return post-MVP.
 
-## TL;DR
+**Why rolled back:** the four-subagent path measured ~1.5M tokens / 315 LLM calls per finished composition vs ~64k tokens / one Director loop on the same prompt — a ~24× cost regression with no measurable quality gain. Mastra dynamic tools resolve once per `sendMessage` (not per step), so a single Director with all tools registered + per-tool out-of-phase guards delivered the same pipeline ordering at 1/24 the cost.
+
+**What survives from this LLD:**
+- The **state shape** (`brief`, `storyboard`, `validationReport` on `VibeFramesState`) — kept in `state.ts`
+- The **tool ordering discipline** (commit-brief → commit-storyboard → create-beat × N → finish-compose → check-storyboard) — encoded in `director/skills/workflow/skill.md`
+- The **YOLO contract** (`state.yolo: true`, `disableBuiltinTools` of approval flow) — kept in `harness/index.ts`
+- The **per-phase skills** (workflow / brief / storyboard / design / validate) — kept in `director/skills/`
+
+**What was removed:** four subagent definitions, the `subagent` built-in tool wiring, the `subagent_*` SSE events filter list, the per-phase prompt files, the cross-phase return-value plumbing.
+
+**When to revisit subagents:** when (a) Mastra ships `prepareStep` per-step tool refresh, (b) we have an Editor mode that genuinely needs separate personas (not just phases), or (c) we move to a multi-turn refinement loop where subagent return values carry between turns.
+
+---
+
+## TL;DR (original — historical context)
 
 One **Director mode** orchestrates four **Mastra subagents** — Brief → Storyboard → Compose → Validate — inside a **single user turn**. The user types one prompt and receives a finished video. No mode switching, no human handshakes. The whole pipeline ran end-to-end in a 24-second spike against `gpt-4o-mini`.
 

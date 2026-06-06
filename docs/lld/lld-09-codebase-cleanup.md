@@ -1,6 +1,55 @@
 # LLD-09 · Codebase cleanup & hierarchical reorganization
 
-Status: Proposed
+> **Status: Shipped (2026-06-06)** — Steps 1–6 landed in M10. The harness reorganized into `composition/`, `director/`, `tools/`, `tools-internal/`, `services/`, `react/`. Stale types removed. `transition-registry.service.ts` and `add-transition` deleted (the agent never used them; subagents were rolled back per LLD-08).
+> The runtime SSOT for the new shape is [`docs/harness-architecture.md`](../harness-architecture.md). This doc is kept for the *why* and the deletions ledger.
+
+Status (history): Proposed → Shipped 2026-06-06.
+Owner: VibeFrames
+Related: LLD-08 (subagents — superseded), `docs/harness-architecture.md` (SSOT)
+
+## What landed vs what was deferred
+
+```
+   ✅ Step 1 — Pure deletes
+       - tech-stack.tsx / tech-logos.tsx / their tests
+       - app/page.tsx commented imports cleaned
+       - config.ts stale modes block dropped
+
+   ✅ Step 2 — Stale types
+       - types.ts split into composition/schema.ts
+       - HarnessMode / HarnessStateSchema / CompositionStatus removed
+       - __tests__/types.test.ts deleted
+
+   ✅ Step 3 — store.ts shim
+       - composition-store imports inlined into 4 tools
+       - shim deleted
+
+   ✅ Step 4 — File reorganization (harness)
+       - composition/, director/, react/ now exist as planned
+       - tools/ split into tools/ (agent-facing) + tools-internal/ (translator-only)
+
+   ✅ Step 5 — Components reorganization
+       - studio/{shell,chat,preview,code}/ structure landed
+
+   ◑ Step 6 — Skills scope — partially shipped
+       - director/skills/{workflow,brief,storyboard,design,validate}/ now exist
+       - 5 skills total. Per-phase scoping is moot since subagents were rolled back —
+         single Director loads all 5 skills every turn (token cost is negligible)
+
+   ✗ DELETED (not in original plan, added during cleanup)
+       - src/harness/services/transition-registry.service.ts
+       - src/harness/skills/transitions/, skills/effects/, skills/social-overlays/,
+         skills/blocks/, skills/hyperframes/ (the legacy flat skill bundle)
+       - src/harness/tools/add-transition.ts
+       - tests for transitions and the legacy skill bundle (~447 tests removed
+         alongside ~700 lines of dead skill markdown)
+```
+
+The single-Director SSOT lives at [`docs/harness-architecture.md`](../harness-architecture.md). The original plan below is kept verbatim for posterity.
+
+---
+
+Original status: Proposed
 Owner: VibeFrames
 Last updated: 2026-06-06
 Related: LLD-08 (phased director — drives some of the moves here)

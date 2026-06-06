@@ -94,7 +94,6 @@ All four phases run **inside one user turn**. The agent reads the workflow skill
    │
    ├── services/                 long-lived registries
    │   ├── clip-registry.service.ts        ◄── BLOCK CATALOG (data)
-   │   ├── transition-registry.service.ts
    │   ├── types.ts                         shared types
    │   └── index.ts
    │
@@ -105,17 +104,12 @@ All four phases run **inside one user turn**. The agent reads the workflow skill
    │   ├── check-storyboard.ts   runs validation rules → report
    │   ├── get-composition.ts    read-only inspection
    │   ├── list-blocks.ts        slim catalog (id+description, no HTML)
-   │   ├── get-block-schemas.ts  full catalog (with HTML — used by translator only)
-   │   ├── get-transition-schemas.ts
-   │   ├── index.ts              barrel for legacy callers
    │   └── __tests__/
    │
    ├── tools-internal/           low-level mutation primitives
    │   ├── add-clip.ts           NOT exposed to the agent
    │   ├── update-clip.ts        called only by the translator
-   │   ├── remove-clip.ts
-   │   ├── add-transition.ts
-   │   └── __tests__/
+   │   └── remove-clip.ts
    │
    ├── react/                    client hooks
    │   ├── use-composition.ts    derive ClipInfo[] + html from messages

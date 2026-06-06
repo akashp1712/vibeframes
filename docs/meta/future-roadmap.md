@@ -106,11 +106,11 @@ Mark items: `[ ]` open · `[~]` exploring · `[x]` shipped.
 
 The HyperFrames docs in `.agents/skills/hyperframes-*` already define a rich vocabulary; we're growing our catalog *up* through three tiers.
 
-**Tier 1 — Static inline blocks + transitions (today, no architecture change)**
+**Tier 1 — Static inline blocks (today)**
 - `src/harness/services/clip-registry.service.ts` — Tailwind HTML fragments with `{{slot}}` vars. Every block has a `kind: "unit" | "composition"` so the agent knows whether to layer it or use it standalone.
-- `src/harness/services/transition-registry.service.ts` — sibling registry for clip transitions, with its own tools (`add-transition`, `get-transition-schemas`) and skill (`skills/transitions/skill.md`).
-- **Status**: **20 blocks shipped** — 3 atomic units + 7 compositions + 1 lower-third unit + 5 social units + 2 follow units + 2 effect-overlay units. Categories now span backgrounds, titles, lower-thirds, scenes, stats, quotes, CTAs, end-cards, social, follow, and effect-overlay. **23 transitions catalogued** — **18 Tier 1** (cut, fade, fade-through-black/white, slide-left/up/stack, zoom-in/out, zoom-punch-in/out, wipe-circle, wipe-diagonal, **wipe-checker**, **iris-open**, **iris-close**, blur-bridge, **glitch-cut**) + 2 Tier 2 stubs (morph-shapes, morph-type) + 3 Tier 3 VFX stubs.
-- **Next here**: the Tier 1 inline-template surface is essentially saturated — every remaining Tier 2 (morph-*) needs SVG path tweening, which belongs in the Tier 2 sub-composition architecture (`add-block { blockId, vars }`) rather than promoted in place. Net catalog growth from here means **new** block / transition categories or **deeper** sub-composition entries, not more promotions.
+- **Status**: **20 blocks shipped** — 3 atomic units + 7 compositions + 1 lower-third unit + 5 social units + 2 follow units + 2 effect-overlay units. Categories: backgrounds, titles, lower-thirds, scenes, stats, quotes, CTAs, end-cards, social, follow, effect-overlay. Live inventory: [`docs/meta/catalog.md`](./catalog.md).
+- **Transitions registry was deleted in M10 cleanup** — agent never planned transitions, translator never consulted it. Restoration plan lives in MVP 2.0 (CSS transitions wired into translator, not a separate registry) and MVP 4.0 (shader transitions). See [`plan.md` §4.5](./plan.md) and [`docs/analysis/hyperframes-vs-vibeframes.md`](../analysis/hyperframes-vs-vibeframes.md) §5.2 / §5.4.
+- **Next here**: net catalog growth from here means **new** block categories (diagrams for explainer MVP 2.0, vfx blocks for MVP 4.0) or **deeper** sub-composition entries, not promotions of stubs.
 
 **Tier 2 — Sub-composition blocks with GSAP timelines (next architecture step)**
 - Source: `.agents/skills/hyperframes/references/techniques.md` (13 techniques), `patterns.md` (PiP, text-behind-subject, title-card-fade, slide-show).

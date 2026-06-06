@@ -204,7 +204,7 @@ Break into ordered sub-modules. Each ships its own LLD if non-trivial.
 
 | Sub | Goal | Sessions | Status |
 |---|---|---|---|
-| M10a | Block registry: 21 Zod-schema'd HyperFrames blocks in `services/clip-registry.service.ts` (background-fill, hero-title, kinetic-words, split-screen, stats-callout, quote-pull, cta-button, end-card, lower-third, social/follow/effect overlays) | 1–2 | ✅ shipped |
+| M10a | Block registry: 20 Zod-schema'd HyperFrames blocks in `services/clip-registry.service.ts` (background-fill, hero-title, kinetic-words, split-screen, stats-callout, quote-pull, cta-button, end-card, lower-third, social/follow/effect overlays) | 1–2 | ✅ shipped |
 | M10b | Editor 3-pane shell (Chat · Preview · Code) — 4-pane (Properties) deferred | 1 | ✅ shipped |
 | M10c | Timeline visualization in Preview panel (GSAP-driven iframe) — ADR-005 deferred | 2 | ✅ shipped (basic) |
 | M10d | Properties panel | 1 | ⏸ deferred to M-future |
@@ -216,12 +216,15 @@ Break into ordered sub-modules. Each ships its own LLD if non-trivial.
 | M10j | Cleanup: deleted dead `transitionRegistry`, `tools/index.ts` legacy barrel, `add-transition` tool. Wrote `docs/harness-architecture.md` as SSOT. | 1 | ✅ shipped |
 
 What landed (recap):
-- One-prompt → finished composition end-to-end on `gpt-4o-mini` in ~30-40s
-- 5-skill discipline pack (workflow / brief / storyboard / design / validate)
-- 21-block catalog with brand-color injection on bg track
+- One-prompt → finished composition end-to-end on `gpt-4o-mini` in ~30-40s, ~64k tokens (subagents path was 1.5M tokens / 315 LLM calls — rolled back)
+- Single Director mode (`src/harness/director/`) — no subagents, no mode switching
+- 5-skill discipline pack in `director/skills/` (workflow / brief / storyboard / design / validate)
+- 20-block catalog with brand-color injection on bg track (transitions registry deleted in cleanup)
 - 8 deterministic validation rules
-- Brand registry fallback (Linear, Stripe, Vercel, ~20 known brands)
+- Brand registry fallback (Linear, Stripe, Vercel, ~20 known brands) with strict `safeHexColor` allowlist
+- Live e2e LLM test (`pnpm test:e2e`) gated on `OPENAI_API_KEY`
 - Single source of truth doc at `docs/harness-architecture.md`
+- Deep-dive vs HyperFrames packs: `docs/analysis/hyperframes-vs-vibeframes.md` (drives MVP 1.0 → 5.0 roadmap below)
 
 - **LinkedIn post #3** mid-M10: composition model post
 - **LinkedIn post #4** end of M10: full demo (chat → timeline updates → preview live)
@@ -292,43 +295,56 @@ no manual edits, validation passes clean.
 
 | Capability | Status |
 |---|---|
-| Single-agent Director walks brief → storyboard → compose → validate | ✅ |
-| 21-block catalog with brand-aware variant rendering | ✅ |
+| Single-agent Director walks brief → storyboard → compose → validate in one turn | ✅ |
+| 20-block catalog with brand-aware variant rendering | ✅ |
 | 5 markdown skills (workflow / brief / storyboard / design / validate) | ✅ |
-| Brand registry (Linear, Stripe, Vercel, …) with hex sanitation | ✅ |
+| Brand registry (Linear, Stripe, Vercel, …) with strict `safeHexColor` allowlist | ✅ |
 | Studio: 3-pane shell, progressive preview render via SSE | ✅ |
 | Validation: 8 deterministic rules, retry on errors (≤2 attempts) | ✅ |
-| `pnpm test:e2e` live LLM e2e test | ✅ |
+| `pnpm test:e2e` live LLM e2e test (gated on `OPENAI_API_KEY`) | ✅ |
 | `docs/harness-architecture.md` SSOT | ✅ |
 
 **Known gaps in 1.0** (not regressions, never had them):
-- No transitions between beats
+- No transitions between beats (transitions registry was deleted in M10 cleanup; agent never planned them and translator never consulted it — see [`docs/analysis/hyperframes-vs-vibeframes.md`](../analysis/hyperframes-vs-vibeframes.md) §3 for the full gap matrix)
+- No entrance choreography — block templates ship static markup; no GSAP boilerplate emitted
+- No layout / contrast audits (no analog of `hyperframes inspect` or `validate --wcag`)
 - No diagram / flowchart blocks (composed from divs only)
-- No audio / VO / music
-- No captions
-- Preview is opacity crossfade only (no GSAP scene transitions, no shaders)
-- Translator copy comes from brand.name + brief.message — no per-beat
-  user-facing copy field, so all beats lean on brand identity for headlines
+- No audio / VO / music · no captions
+- Translator copy comes from brand.name + brief.message — no per-beat user-facing copy field, so all beats lean on brand identity for headlines
+
+### MVP 1.0.1 — stabilization (next up, ~1 session)
+
+**Goal:** close silent-failure surface so today's catalog stops shipping subpar output. Drives directly from the gap analysis at [`docs/analysis/hyperframes-vs-vibeframes.md`](../analysis/hyperframes-vs-vibeframes.md) §5.1.
+
+| Item | Effort | Why |
+|---|---|---|
+| Surface `safeHexColor` rejection in validation report | S | Today the brand-accent line silently disappears when the LLM emits malformed hex. Agent and journal should see it. |
+| `rule_varSubstitutionFallback` validation rule | S | Translator records when a var fell through to a placeholder ("Hello", "100", etc.); rule warns per occurrence so the user knows the copy isn't intentional. |
+| Refactor 5 social overlays to use `anchor` var | M | `social-avatar` / `mention-card` / `hashtag-pill` / `comment-bubble` / `like-counter` hard-code position. Mirror `subtitle-anchor`'s anchor enum. |
+| Broaden `stats-callout` keyword routing | S | Today's regex `/\d+%\|\d+x\|metric\|callout\|stat/` misses "double", "triple", "K downloads", "ARR", "MAU". |
+| Document 1-beat composition path in `design/skill.md` | XS | `pickPrimaryBlock` returns hero-title for first-and-last beat — clarify. |
+
+**Acceptance:** prompt → composition → validation report shows zero silent placeholder fallbacks for non-trivial inputs; brand colors land on every composition or surface a clear warning; positioned overlays land where the storyboard intended.
 
 ### MVP 2.0 — "the explainer MVP"
 
-**Acceptance:** the system can produce a 30-second tech-product
-explainer (e.g. "explain Harness with a high-level diagram") with
-narration-quality copy and at least one diagram-style scene.
+**Acceptance:** 30s explainer composition has visible (and configurable) transitions between every beat; every text element animates in; no element bleeds into the next scene's frame; validation warns on contrast or layout issues.
 
-Picks from `.agents/skills/website-to-hyperframes` and the `hyperframes`
-core skill — adopt the discipline patterns (per-beat HTML evidence,
-animation-map verification, beat-level VO scripting).
+Picks from `.agents/skills/website-to-hyperframes` and the `hyperframes` core skill — adopt the discipline patterns (per-beat HTML evidence, animation-map verification, beat-level VO scripting).
 
-| New work | Notes |
-|---|---|
-| **Per-beat copy fields** in `Storyboard.Beat` — `headline`, `subheading`, `voCue` (already exists) | Decouples user-facing copy from internal `concept` prose. Translator stops slicing concept into headlines. |
-| **3-5 new "diagram" blocks** (flowchart-vertical, kanban, timeline-strip, terminal-typer, code-block) | These are the "feature reveal" workhorses for explainer videos. Compose from divs + Tailwind, no real graphics yet. |
-| **Better selection heuristics** in `pickPrimaryBlock` — concept-keyword routing tuned per category | Stops the "extreme-close → stats-callout" overfit. |
-| **Captions track** (LLD-07) | Per-word karaoke, simple GSAP impl. No transcription — VO scripts come from beat.voCue. |
-| **Transitions v0** — restore from git, but ship 4 transitions only: cut, fade, push, blur | Schema: `Beat.transitionToNext: { kind, durationMs } \| null`. Translator emits short overlay clip on `track-transition`. NO shader transitions yet. |
-| **Validation rules** — diagram-presence, voCue-coverage, transition-variety | Catches missing pieces. |
-| **Storyboard skill update** — explainer arc patterns, diagram beat templates | One section: "for explainer prompts, use this beat skeleton". |
+| New work | Effort | Notes |
+|---|---|---|
+| **Entrance choreography boilerplate** | M | Each block template gets a paired `<script type="module">` snippet that runs `tl.from(...)` on its named children. Translator stitches them. Stagger 0.08s, 3 eases per scene. (HF: `motion-principles.md` + `techniques.md`) |
+| **CSS crossfade transitions v0** | M | Translator emits a `<style>` block per composition + GSAP scenes that fade `[data-clip-id]` ranges. Beat schema gets a `transitionToNext: { kind, durationMs } \| null` field. Ship 4 only: cut, fade, push, blur. NO shader transitions yet. |
+| **Hard-kill at scene boundary** | S | Translator wraps each clip in opacity:0 + visibility:hidden after `data-duration` so cross-scene bleed is impossible. (HF: SKILL.md L327 + motion-principles) |
+| **Per-beat copy fields** in `Beat` — `headline`, `subheading` (voCue already exists) | S | Decouples user-facing copy from internal `concept` prose. Translator stops slicing concept into headlines. |
+| **3–5 diagram blocks** (flowchart-vertical, kanban, timeline-strip, terminal-typer, code-block) | M | "Feature reveal" workhorses for explainer videos. Compose from divs + Tailwind, no real graphics yet. |
+| **Better selection heuristics** in `pickPrimaryBlock` — concept-keyword routing tuned per category | S | Stops the "extreme-close → stats-callout" overfit; addresses today's narrow regex. |
+| **Layout overflow audit (lite)** | L (stretch) | Headless-Chrome seek per beat hero-frame, measure scrollWidth/scrollHeight per `data-clip-id` subtree, warn on overflow. (HF: `hyperframes inspect`) |
+| **Contrast audit (lite)** | L (stretch) | Sample 5 timestamps, screenshot, sample background pixels behind text, compute WCAG AA, warn <4.5:1. (HF: `hyperframes validate`) |
+| **Validation rules** — diagram-presence, voCue-coverage, transition-variety | S | Catches missing pieces. |
+| **Storyboard skill update** — explainer arc patterns, diagram beat templates | XS | One section: "for explainer prompts, use this beat skeleton". |
+| **Captions track** (LLD-07) | M | Per-word karaoke, simple GSAP impl. No transcription — VO scripts come from beat.voCue. (Could move to MVP 3.0 if we don't get to it.) |
 
 ### MVP 3.0 — "the social MVP"
 
