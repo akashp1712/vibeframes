@@ -3,7 +3,7 @@
 import type { ChatMessage as CustomChatMessage, AgentStatus } from "@/harness/use-harness-chat";
 import { Film, Send, Loader2, MessageSquare, Sparkles } from "lucide-react";
 import { EphemeralStatus } from "./ephemeral-status";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,6 +41,7 @@ export function ChatPanel({
   onSelectPrompt,
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -48,6 +49,26 @@ export function ChatPanel({
     }
   }, [messages]);
 
+  // Always submit via the form's native channel, regardless of how the user
+  // triggered it (Send button click, Enter key, suggested-prompt button).
+  // This avoids depending on base-ui Button forwarding `type="submit"`
+  // through useButton (which injects `type='button'` by default) and gives a
+  // single, testable entry point for both keyboard and mouse paths.
+  const requestSubmit = () => formRef.current?.requestSubmit();
+
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isLoading || !input.trim()) return;
+    onSubmit(e);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // IME composition guard — Enter during Japanese/Chinese/Korean input
+    // selection must not submit.
+    if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    requestSubmit();
+  };
 
   return (
     <div className="flex w-80 shrink-0 flex-col overflow-hidden border-r border-border bg-background lg:w-96">
@@ -72,25 +93,22 @@ export function ChatPanel({
       </ScrollArea>
 
       <div className="relative shrink-0 border-t border-border bg-background p-3">
-        <form onSubmit={onSubmit} className="relative">
+        <form ref={formRef} onSubmit={handleFormSubmit} className="relative">
           <Textarea
             value={input}
             onChange={onInputChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                onSubmit(e);
-              }
-            }}
+            onKeyDown={handleKeyDown}
             placeholder="Describe your video…"
             rows={1}
             className="min-h-11 resize-none pr-11"
+            aria-label="Chat message"
           />
           <Button
             type="submit"
             size="icon"
             disabled={isLoading || !input.trim()}
             className="absolute right-1.5 top-1.5 size-8"
+            aria-label={isLoading ? "Sending" : "Send message"}
           >
             {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
           </Button>

@@ -4,6 +4,8 @@ import { createUpdateClipTool } from "./update-clip";
 import { createRemoveClipTool } from "./remove-clip";
 import { createGetCompositionTool } from "./get-composition";
 import { createGetBlockSchemasTool } from "./get-block-schemas";
+import { createAddTransitionTool } from "./add-transition";
+import { createGetTransitionSchemasTool } from "./get-transition-schemas";
 
 export function createHarnessTools(services: HarnessServices) {
   return {
@@ -12,5 +14,7 @@ export function createHarnessTools(services: HarnessServices) {
     "remove-clip": createRemoveClipTool(),
     "get-composition": createGetCompositionTool(),
     "get-block-schemas": createGetBlockSchemasTool(services),
+    "add-transition": createAddTransitionTool(services),
+    "get-transition-schemas": createGetTransitionSchemasTool(services),
   };
 }

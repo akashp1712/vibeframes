@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { DotPattern } from "@/components/ui/dot-pattern";
@@ -10,6 +13,12 @@ interface PreviewPanelProps {
   html: string | null;
   clips?: ClipInfo[];
   totalDuration?: number;
+  /**
+   * True while the agent is mid-turn. We freeze the iframe to the last
+   * stable composition during this window so the preview doesn't restart
+   * playback on every intermediate `add-clip` tool result.
+   */
+  isLoading?: boolean;
 }
 
 function buildSrcDoc(html: string): string {
@@ -20,18 +29,27 @@ function buildSrcDoc(html: string): string {
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; }
-  body { background: #0a0a0a; overflow: hidden; display: flex; flex-direction: column; }
-  .stage-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  /* Light "studio backdrop" — the iframe sits inside the light chat shell
+     so a fully-black surround looked jarring. The stage itself stays dark. */
+  body {
+    background:
+      radial-gradient(ellipse at top, #ffffff 0%, #f4f4f5 60%, #e4e4e7 100%);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .stage-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
   #stage {
     position: relative;
     aspect-ratio: 16 / 9;
     width: min(100%, calc((100vh - 80px) * 16 / 9));
     max-width: 100%;
     max-height: 100%;
-    background: #000;
-    border: 1px solid #262626;
-    border-radius: 8px;
+    background: #0a0a0a;
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.08),
+      0 10px 30px -10px rgba(0,0,0,0.25),
+      0 0 0 1px rgba(0,0,0,0.06);
   }
   #stage [data-composition-id] {
     position: absolute; inset: 0;
@@ -40,17 +58,21 @@ function buildSrcDoc(html: string): string {
   }
   #stage .clip { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
   .controls {
-    display: flex; gap: 8px; align-items: center;
-    padding: 8px 12px; background: #171717; border-top: 1px solid #262626;
-    font-family: ui-sans-serif, system-ui; color: #e5e5e5; font-size: 12px;
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-family: ui-sans-serif, system-ui; color: #18181b; font-size: 12px;
   }
   .controls button {
-    background: #262626; border: 1px solid #404040; color: #e5e5e5;
-    padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    background: #ffffff; border: 1px solid #e4e4e7; color: #18181b;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;
+    transition: background .15s, border-color .15s;
   }
-  .controls button:hover { background: #404040; }
-  .controls .time { font-family: ui-monospace, SF Mono, monospace; min-width: 70px; }
-  .controls input[type=range] { flex: 1; accent-color: #fff; }
+  .controls button:hover { background: #f4f4f5; border-color: #d4d4d8; }
+  .controls .time { font-family: ui-monospace, SF Mono, monospace; min-width: 70px; color: #52525b; }
+  .controls input[type=range] { flex: 1; accent-color: #18181b; }
 </style>
 </head><body>
 <div class="stage-wrap"><div id="stage">${html}</div></div>
@@ -85,18 +107,30 @@ function buildSrcDoc(html: string): string {
     const t = tl.time();
     document.getElementById('time').textContent = t.toFixed(1) + 's / ' + total.toFixed(1) + 's';
     document.getElementById('scrub').value = t;
+    // Surface playhead to the parent so the Composition Timeline can render
+    // a synced cursor. Throttled implicitly by GSAP's RAF onUpdate.
+    try { window.parent.postMessage({ type: 'vf-playhead', time: t, total }, '*'); } catch {}
   }});
 
   clips.forEach(c => {
     const end = c.start + c.duration;
-    // Only fade out if another clip on the same track starts soon — otherwise
-    // let this clip remain visible until the timeline loops.
-    const successor = clips.find(o => o !== c && o.track === c.track && o.start >= end - 0.05 && o.start <= end + 0.5);
     const inDur = Math.min(0.6, c.duration * 0.3);
     tl.fromTo(c.el, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: inDur, ease: 'power2.out' }, c.start);
-    if (successor) {
-      const outDur = Math.min(0.4, c.duration * 0.2);
-      tl.to(c.el, { opacity: 0, duration: outDur, ease: 'power2.in' }, end - outDur);
+
+    // Fade-out policy: a clip should disappear at its end-of-duration if the
+    // composition continues past it (anything else starts at or after this
+    // clip ends). Otherwise it's a trailing/background clip and we let it
+    // hold until the timeline loops.
+    //
+    // Cross-fade timing: start the fade-out AT \`end\` (= successor.start
+    // for back-to-back clips on the same track) and run it over the same
+    // window as the successor's fade-in. This avoids the brief blank frame
+    // that the previous logic produced by fading out BEFORE the successor
+    // started fading in.
+    const hasFollowOn = clips.some(o => o !== c && o.start >= end - 0.05);
+    if (hasFollowOn) {
+      const outDur = Math.min(0.6, c.duration * 0.3);
+      tl.to(c.el, { opacity: 0, duration: outDur, ease: 'power2.in' }, end);
     }
   });
 
@@ -112,8 +146,46 @@ function buildSrcDoc(html: string): string {
 </body></html>`;
 }
 
-export function PreviewPanel({ html, clips = [], totalDuration = 0 }: PreviewPanelProps) {
-  const srcdoc = html ? buildSrcDoc(html) : null;
+export function PreviewPanel({
+  html,
+  clips = [],
+  totalDuration = 0,
+  isLoading = false,
+}: PreviewPanelProps) {
+  const [playheadSec, setPlayheadSec] = useState(0);
+
+  // Stable html — what the iframe actually renders. We freeze updates while
+  // the agent is working so the preview doesn't restart playback every time
+  // an intermediate `add-clip` tool result lands. Exception: if we currently
+  // have nothing to show (displayHtml === null), let the first composition
+  // through so the user doesn't stare at an empty stage for the whole turn.
+  const [displayHtml, setDisplayHtml] = useState<string | null>(html);
+  useEffect(() => {
+    if (!isLoading || displayHtml === null) {
+      setDisplayHtml(html);
+    }
+  }, [html, isLoading, displayHtml]);
+
+  const srcdoc = displayHtml ? buildSrcDoc(displayHtml) : null;
+
+  // Listen for playhead updates posted from the iframe's GSAP timeline so
+  // the Composition Timeline can render a synced cursor. The iframe sends
+  // `{ type: 'vf-playhead', time, total }` on every RAF tick.
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      const data = e.data as { type?: string; time?: number } | null;
+      if (data && data.type === "vf-playhead" && typeof data.time === "number") {
+        setPlayheadSec(data.time);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  // Reset cursor whenever the composition itself changes (new key on iframe).
+  useEffect(() => {
+    setPlayheadSec(0);
+  }, [displayHtml]);
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col bg-muted/20">
@@ -125,11 +197,15 @@ export function PreviewPanel({ html, clips = [], totalDuration = 0 }: PreviewPan
         </span>
       </div>
 
-      {/* Stage area */}
-      <div className="flex flex-1 items-center justify-center overflow-hidden pt-10">
-        {srcdoc ? (
+      {/* Stage area — while the agent is building, we hide the iframe and
+          show a dedicated building state. Showing the previous composition
+          underneath is confusing when the new prompt is unrelated. */}
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden pt-10">
+        {isLoading ? (
+          <BuildingState />
+        ) : srcdoc ? (
           <iframe
-            key={html?.slice(0, 40)}
+            key={displayHtml?.slice(0, 40)}
             srcDoc={srcdoc}
             title="HyperFrames Preview"
             className="h-full w-full border-0"
@@ -141,7 +217,41 @@ export function PreviewPanel({ html, clips = [], totalDuration = 0 }: PreviewPan
       </div>
 
       {/* Timeline strip below stage */}
-      {clips.length > 0 && <TimelineStrip clips={clips} totalDuration={totalDuration} />}
+      {clips.length > 0 && (
+        <TimelineStrip
+          clips={clips}
+          totalDuration={totalDuration}
+          playheadSec={playheadSec}
+        />
+      )}
+    </div>
+  );
+}
+
+function BuildingState() {
+  return (
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+      <DotPattern
+        className={cn(
+          "[mask-image:radial-gradient(ellipse_at_center,white,transparent_70%)]",
+          "text-foreground/15",
+        )}
+        glow
+      />
+      <div className="relative flex flex-col items-center gap-3 text-center">
+        <div className="flex size-12 items-center justify-center rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur-sm">
+          <span className="relative flex size-3">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/70" />
+            <span className="relative inline-flex size-3 rounded-full bg-primary" />
+          </span>
+        </div>
+        <AnimatedShinyText className="text-sm font-medium">
+          Building your composition
+        </AnimatedShinyText>
+        <p className="max-w-xs text-xs text-muted-foreground/70">
+          Preview appears here when the agent finishes the turn.
+        </p>
+      </div>
     </div>
   );
 }

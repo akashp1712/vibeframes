@@ -1,11 +1,80 @@
 ---
 name: hyperframes
-description: Core knowledge for composing HTML/CSS clips in HyperFrames — the HTML-native video renderer used by VibeFrames Studio
+description: Universal foundation for composing HTML/CSS clips in VibeFrames Studio. Use on every turn — the render contract, the stage, the typography ramp, the timing rules, and the discipline that gates `add-clip` calls. Every other VibeFrames skill builds on this one.
 ---
 
 # HyperFrames — Composition Skill
 
 You are composing **video clips as HTML**. Each clip is a fragment of HTML+Tailwind that occupies a slice of time on a track. The HyperFrames renderer reads `data-*` attributes on each clip and animates opacity / position based on the timeline.
+
+This skill is the **universal foundation**. Every other VibeFrames skill builds on it:
+
+- `skills/blocks/skill.md` — registry of pre-designed scene blocks (backgrounds, titles, scenes, CTAs). **Prefer blocks to free-form HTML.**
+- `skills/social-overlays/skill.md` — TikTok / IG / X UI overlays (avatar, mention, hashtag, comment, like-counter, follow).
+- `skills/effects/skill.md` — cosmetic full-frame textures (grain, scanlines).
+- `skills/transitions/skill.md` — clip-to-clip transitions (fade, slide, zoom, wipe, blur).
+
+## The Iron Law
+
+```
+BUILD WHAT WAS ASKED. EVERY CLIP EARNS ITS PLACE.
+```
+
+A request for *"a title card"* is not a request for *"a title card + 3 supporting scenes + ambient music + captions"*. If additional clips would genuinely improve the piece, **propose them in your reply** — don't add them silently.
+
+Thinking *"I'll just add one more clip to make it feel complete"*? Stop. That's rationalization. Build the brief. Iterate on signal.
+
+## Discovery (open prompts only)
+
+If the user said *"make me a video"* / *"surprise me"* / *"intro for our product"* without a brand or platform, **ask before composing**:
+
+- **Audience** — devs / executives / consumers / creators?
+- **Platform** — landing hero / social ad / product demo / internal?
+- **Mood** — clean / playful / cinematic / retro?
+- **Brand colors or fonts** — any constraints, or pick freely?
+
+Skip if the user already named these. For specific requests (*"add a CTA"*, *"fix timing on clip 3"*), go straight to the plan.
+
+## Plan before tools
+
+Before calling `add-clip` even once, think:
+
+1. **What** — what should the viewer experience? Name the message in one sentence.
+2. **Structure** — how many beats? Which clip is hero, which is support, which is CTA?
+3. **Rhythm** — pacing pattern. Three identical 3000ms holds = slideshow. Try `hook · hold · resolve` (1.2s · 4s · 2.8s) or `fast-fast-SLOW-fast`.
+4. **Timing** — total duration; which clips abut, which overlap, where do transitions land.
+5. **Layout** — end-state per beat (see Layout Before Animation below).
+6. **Direction** — colour, typography, motion choices grounded in the brief — not lazy defaults.
+
+For small edits (one color, one duration), skip straight to the rules.
+
+## Layout Before Animation
+
+Position every element where it should be at its **most visible moment** — the frame when it's fully on screen, correctly placed, and not yet exiting. Build that as static HTML+CSS first. The renderer handles fade-in / fade-out; you focus on the **end-state layout**.
+
+**Why**: if you position elements at their animated start state (offscreen, scale 0, opacity 0), overlaps and overflow are invisible until the video plays. Build the end-state first, see and fix layout, then trust the renderer for entries / exits.
+
+<Good>
+```html
+<!-- End-state: where everything lives at its most visible moment. -->
+<div class="flex h-full w-full flex-col items-center justify-center gap-6 bg-black px-20">
+  <h1 class="text-7xl font-bold tracking-tight text-white">AI Gateway</h1>
+  <p class="text-2xl text-slate-400">One API. Every model.</p>
+</div>
+```
+Flex layout, padding pushes content inward, both elements visible together at the hero frame.
+</Good>
+
+<Bad>
+```html
+<!-- Animated start state baked into the layout — you can't see overlap until it renders. -->
+<div class="absolute inset-0 bg-black">
+  <h1 class="absolute left-[160px] top-[200px] text-7xl opacity-0">AI Gateway</h1>
+  <p class="absolute left-[160px] top-[400px] text-2xl opacity-0">One API. Every model.</p>
+</div>
+```
+Absolute positioning + invisible elements = guessing the final layout. Use flex + the static end-state.
+</Bad>
 
 ## The render contract (read carefully)
 
@@ -42,7 +111,8 @@ Center is the sane default. Use `items-start` / `items-end` / `justify-start` / 
 - **Track 0**: background (solid color, gradient, image)
 - **Track 1**: hero content (main heading, logo)
 - **Track 2**: supporting content (subtitle, attribution, lower-third)
-- **Track 3+**: overlays (badges, watermarks, decorative shapes)
+- **Track 3+**: social overlays — see `skills/social-overlays/skill.md`
+- **Top-most track**: effects (grain, scanlines) — see `skills/effects/skill.md`
 
 Higher track index renders on top. Add a separate clip on a separate track when content should overlap.
 
@@ -91,7 +161,7 @@ For a Vercel-like aesthetic: pure black background + white text + thin gray subt
 
 ## Animation strategy
 
-The HyperFrames renderer **already handles** clip fade-in and fade-out at the timeline level (via GSAP). You do not need to add fade animations in your HTML.
+The HyperFrames renderer **already handles** clip fade-in and fade-out at the timeline level. You do not need to add fade animations in your HTML.
 
 **What YOU should add inside clip HTML**:
 - Static styling (gradients, borders, shadows)
@@ -101,9 +171,23 @@ The HyperFrames renderer **already handles** clip fade-in and fade-out at the ti
 **What YOU should NOT add**:
 - `<script>` tags — they're stripped or unsafe inside the iframe
 - Fade-in/out — handled by the renderer
-- Position transforms that conflict with the renderer's `opacity`/`y` tweens
+- Position transforms that conflict with the renderer's `opacity` tweens
 
-## Example: minimal hero clip body
+## Lazy defaults to question
+
+These are the "least-effort" choices that read as generic. Use them **only when the brief actually justifies them**, not as a fallback:
+
+- `bg-black` + `text-white` everywhere — fine for a Vercel-coded tech brief; lazy for a playful brand reel.
+- Three identical 3000ms holds — reads as a slideshow, not a video. Vary the pacing.
+- Centered hero text in every clip — composition fatigue. Anchor some clips top / bottom / left.
+- `text-blue-500` / `text-orange-500` / `text-purple-500` for accents — picks a different rainbow each clip. Pick **one** accent and reuse it.
+- A transition between every clip — sometimes a hard cut is better. `cut` is a real option.
+
+## Free-form HTML examples (fallback when no block fits)
+
+**Prefer the block catalog** (`skills/blocks/skill.md`) before reaching for these patterns. Use them only when no registered block fits the brief.
+
+### Minimal hero clip body
 
 ```html
 <div class="flex h-full w-full flex-col items-center justify-center gap-6 bg-black">
@@ -112,7 +196,7 @@ The HyperFrames renderer **already handles** clip fade-in and fade-out at the ti
 </div>
 ```
 
-## Example: lower-third overlay
+### Lower-third overlay
 
 ```html
 <div class="flex h-full w-full items-end justify-start p-16">
@@ -123,7 +207,7 @@ The HyperFrames renderer **already handles** clip fade-in and fade-out at the ti
 </div>
 ```
 
-## Example: split-screen with image
+### Split-screen with image
 
 ```html
 <div class="flex h-full w-full bg-slate-950 text-white">
@@ -137,13 +221,18 @@ The HyperFrames renderer **already handles** clip fade-in and fade-out at the ti
 </div>
 ```
 
-## Best-practice checklist before calling `add-clip`
+## Definition of Done — before declaring the composition complete
 
-1. Root element is `flex h-full w-full` (fills the clip)
-2. Background color is explicit
-3. Text color is explicit
-4. Typography uses the ramp above
-5. Safe area respected (≥80px padding from edges)
-6. Track index chosen by layer role (bg=0, hero=1, support=2)
-7. Timing fits the heuristic table
-8. No `<script>` tags, no fade animations in body
+Walk this checklist mentally before your final reply:
+
+1. **Brief covered** — every requested beat / element is present; nothing extra crept in.
+2. **Block-first** — checked `get-block-schemas` before reaching for free-form HTML (see `skills/blocks/skill.md`).
+3. **Vars filled** — no leftover `{{slot}}` in the rendered HTML; transition `vars` chosen intentionally (not auto-filled defaults).
+4. **Layout end-state** — clip body uses flex + padding, not absolute positioning of content containers.
+5. **Colors consistent** — one palette across the composition, not per-clip rainbow accents.
+6. **Typography ramp** — sizes from the table above; one weight pattern across the piece.
+7. **Safe area** — critical text ≥80px from edges.
+8. **Track roles** — bg=0, hero=1, support=2, social=3+, effects=top-most.
+9. **Rhythm** — not three identical holds; pacing varies if the brief has a narrative arc.
+10. **No `<script>` tags**, no fade animations in clip body.
+11. **Honest disclosure** — in your final reply, name what you *didn't* verify (e.g. *"colors against a brand guide"*, *"how it looks on mobile crop"*) instead of claiming completeness you can't prove.

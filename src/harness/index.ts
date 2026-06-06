@@ -49,16 +49,9 @@ export async function getVibeFramesHarness(projectId: string) {
 }
 
 export { HARNESS_CONFIG } from "./config";
-export type {
-  HarnessState,
-  HarnessMode,
-  CompositionStatus,
-  Composition,
-  Track,
-  Clip,
-} from "./types";
-export { HarnessStateSchema, CompositionSchema, TrackSchema, ClipSchema } from "./types";
-export { getComposition, setComposition } from "./store";
+export type { Composition, Track, Clip } from "./types";
+export { CompositionSchema, TrackSchema, ClipSchema } from "./types";
+export { getComposition, setComposition } from "./composition-store";
 export {
   createEmptyComposition,
   addClip,

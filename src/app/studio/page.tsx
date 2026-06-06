@@ -1,64 +1,24 @@
-"use client";
+import { redirect } from "next/navigation";
+import { generateProjectId } from "@/lib/project-id";
 
-import { useHarnessChat } from "@/harness/use-harness-chat";
-import { useEffect } from "react";
-import { toast } from "sonner";
-import { StudioTopbar } from "@/components/studio/studio-topbar";
-import { StudioStatusbar } from "@/components/studio/studio-statusbar";
-import { ChatPanel } from "@/components/studio/chat-panel";
-import { PreviewPanel } from "@/components/studio/preview-panel";
-import { CodePanel } from "@/components/studio/code-panel";
-import { useComposition } from "@/harness/use-composition";
+// Force a fresh render per request — otherwise Next.js would statically
+// prerender the redirect at build time, baking in a single random id and
+// sending every "Open Studio" click to the same composition.
+export const dynamic = "force-dynamic";
 
-const PROJECT_ID = "default";
-
-export default function StudioPage() {
-  const {
-    messages,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    status,
-    activeToolName,
-    error,
-  } = useHarnessChat(PROJECT_ID);
-
-  const composition = useComposition(messages);
-
-  useEffect(() => {
-    if (error) toast.error(error.message || "Something went wrong");
-  }, [error]);
-
-  return (
-    <div className="flex h-dvh flex-col">
-      <StudioTopbar clipCount={composition.clipCount} trackCount={composition.trackCount} />
-      <div className="flex flex-1 overflow-hidden">
-        <ChatPanel
-          messages={messages}
-          input={input}
-          isLoading={isLoading}
-          status={status}
-          activeToolName={activeToolName}
-          onInputChange={handleInputChange}
-          onSubmit={handleSubmit}
-          onSelectPrompt={setInput}
-        />
-        <PreviewPanel
-          html={composition.html}
-          clips={composition.clips}
-          totalDuration={composition.totalDuration}
-        />
-        <CodePanel html={composition.html} />
-      </div>
-      <StudioStatusbar
-        projectId={PROJECT_ID}
-        status={status}
-        activeToolName={activeToolName}
-        clipCount={composition.clipCount}
-        trackCount={composition.trackCount}
-      />
-    </div>
-  );
+/**
+ * `/studio` is a thin server component that mints a fresh project id and
+ * redirects to `/studio/<id>`. Every "Open Studio" click yields a clean
+ * composition; the URL is bookmarkable so the user can return to a specific
+ * project later. The actual Studio UI lives at `/studio/[projectId]`.
+ *
+ * Side effects of this split:
+ *   - One composition file per session under `.data/compositions/<id>.json`
+ *     instead of a shared `default.json`.
+ *   - The `add-clip` / `add-transition` tools read/write through the same
+ *     projectId because the client passes it to `/api/chat` via `data`.
+ *   - Use `pnpm clear-data` to wipe all sessions when iterating locally.
+ */
+export default function StudioIndexPage() {
+  redirect(`/studio/${generateProjectId()}`);
 }

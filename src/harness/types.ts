@@ -1,18 +1,5 @@
 import { z } from "zod";
 
-export const CompositionStatus = z.enum([
-  "empty",
-  "planning",
-  "composing",
-  "previewing",
-  "exporting",
-  "done",
-]);
-export type CompositionStatus = z.infer<typeof CompositionStatus>;
-
-export const HarnessMode = z.enum(["plan", "vibe"]);
-export type HarnessMode = z.infer<typeof HarnessMode>;
-
 export const ClipSchema = z.object({
   id: z.string(),
   trackId: z.string(),
@@ -38,13 +25,3 @@ export const CompositionSchema = z.object({
   tracks: z.array(TrackSchema),
 });
 export type Composition = z.infer<typeof CompositionSchema>;
-
-export const HarnessStateSchema = z.object({
-  projectId: z.string(),
-  mode: HarnessMode,
-  status: CompositionStatus,
-  composition: CompositionSchema.nullable(),
-  plan: z.string().nullable(),
-  error: z.string().nullable(),
-});
-export type HarnessState = z.infer<typeof HarnessStateSchema>;

@@ -1,7 +1,9 @@
 import type { ChatMessage as CustomChatMessage, ToolCall } from "@/harness/use-harness-chat";
 import { cn } from "@/lib/utils";
 import { toolNoun, toolVerb } from "@/lib/tool-labels";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Markdown } from "./markdown";
 
 interface ChatMessageProps {
   message: CustomChatMessage;
@@ -10,14 +12,22 @@ interface ChatMessageProps {
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
   const hasTools = !!message.tools?.length;
+  const hasContent = !!message.content;
 
   return (
     <div className={cn("flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}>
       <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">
         {isUser ? "You" : "Agent"}
       </span>
-      {message.content && (
+      {/* Tool activity stream renders BEFORE assistant content — the model
+          runs tools first and then writes a summary, so the visual order
+          should match the execution order. */}
+      {hasTools && (
+        <ActivityStream tools={message.tools!} hasContent={hasContent} />
+      )}
+      {hasContent && (
         <div
+          data-testid={isUser ? "user-content" : "assistant-content"}
           className={cn(
             "max-w-[92%] border px-4 py-2.5 text-[13px] leading-relaxed shadow-sm",
             isUser
@@ -25,96 +35,142 @@ export function ChatMessage({ message }: ChatMessageProps) {
               : "rounded-xl rounded-tl-none border-border bg-card text-foreground",
           )}
         >
-          {message.content}
+          {isUser ? message.content : <Markdown>{message.content}</Markdown>}
         </div>
       )}
-      {hasTools && <ActivityStream tools={message.tools!} />}
     </div>
   );
 }
 
-function ActivityStream({ tools }: { tools: ToolCall[] }) {
+function ActivityStream({
+  tools,
+  hasContent,
+}: {
+  tools: ToolCall[];
+  hasContent: boolean;
+}) {
+  const anyActive = tools.some((t) => t.state === "calling");
+  // Auto-collapse once all tools are settled AND the assistant has written
+  // its summary. While work is in flight, keep the list open as a live trace.
+  const canCollapse = !anyActive && hasContent;
+  const [expanded, setExpanded] = useState(false);
+  const showItems = !canCollapse || expanded;
+
+  const total = tools.length;
+  const totalMs = tools.reduce(
+    (sum, t) => sum + (typeof t.durationMs === "number" ? t.durationMs : 0),
+    0,
+  );
+  const errored = tools.filter((t) => t.state === "error").length;
+
   return (
-    <div className="mt-2 flex w-full flex-col pl-1">
-      {tools.map((tool, i) => (
-        <ActivityItem key={tool.id} tool={tool} isLast={i === tools.length - 1} />
-      ))}
+    <div className="mt-2 w-full">
+      {/* Unified header: status icon + count + toggle. The whole row is the
+          collapse/expand button so the affordance is one click everywhere. */}
+      <button
+        type="button"
+        data-testid="activity-header"
+        onClick={canCollapse ? () => setExpanded((v) => !v) : undefined}
+        disabled={!canCollapse}
+        aria-label={
+          canCollapse
+            ? showItems
+              ? `Hide ${total} actions`
+              : `Show ${total} actions`
+            : `${total} actions`
+        }
+        aria-expanded={showItems}
+        className={cn(
+          "flex w-full items-center gap-1.5 rounded-md px-1 py-1 text-left",
+          "text-[11px] text-muted-foreground/80",
+          canCollapse && "hover:bg-muted/40 hover:text-muted-foreground",
+        )}
+      >
+        {anyActive ? (
+          <Loader2 className="size-3 animate-spin text-muted-foreground" />
+        ) : errored > 0 ? (
+          <X className="size-3 text-destructive" />
+        ) : (
+          <Check className="size-3 text-emerald-500" />
+        )}
+        <span>
+          {total} {total === 1 ? "action" : "actions"}
+        </span>
+        {totalMs > 0 && !anyActive && (
+          <span className="text-muted-foreground/60">
+            · {totalMs < 1000 ? `${totalMs}ms` : `${(totalMs / 1000).toFixed(1)}s`}
+          </span>
+        )}
+        {errored > 0 && (
+          <span className="text-destructive">· {errored} failed</span>
+        )}
+        {canCollapse && (
+          <ChevronDown
+            className={cn(
+              "ml-auto size-3 text-muted-foreground/60 transition-transform",
+              showItems ? "rotate-0" : "-rotate-90",
+            )}
+          />
+        )}
+      </button>
+
+      {showItems && (
+        <div className="mt-0.5 flex flex-col">
+          {tools.map((tool) => (
+            <ActivityItem key={tool.id} tool={tool} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function ActivityItem({ tool, isLast }: { tool: ToolCall; isLast: boolean }) {
+function ActivityItem({ tool }: { tool: ToolCall }) {
   const isActive = tool.state === "calling";
   const isError = tool.state === "error";
   const verb = toolVerb(tool.name);
   const noun = toolNoun(tool.name);
 
   return (
-    <div className="flex">
-      {/* Rail: single status badge + connecting line below */}
-      <div className="flex w-7 shrink-0 flex-col items-center">
-        <StatusBadge isActive={isActive} isError={isError} />
-        {!isLast && <div className="mt-1 w-px flex-1 bg-border" />}
-      </div>
-
-      {/* Body */}
-      <div className={cn("flex-1 pr-1", isLast ? "pb-0" : "pb-4")}>
-        <div className="flex flex-col gap-0.5 pt-0.5">
-          <span
-            className={cn(
-              "text-[12px] font-medium",
-              isActive
-                ? "text-foreground/90"
-                : isError
-                  ? "text-destructive"
-                  : "text-foreground",
-            )}
-          >
-            {isActive ? (
-              <span className="relative inline-flex overflow-hidden">
-                <span className="bg-gradient-to-r from-foreground/40 via-foreground to-foreground/40 bg-[length:200%_100%] bg-clip-text text-transparent [animation:shimmer_2.4s_linear_infinite]">
-                  {verb}
-                </span>
-              </span>
-            ) : (
-              noun
-            )}
+    <div
+      data-testid="activity-item"
+      className="flex items-center gap-1.5 py-0.5 pl-4 pr-1"
+    >
+      <StatusDot isActive={isActive} isError={isError} />
+      <span
+        className={cn(
+          "text-[11px]",
+          isActive
+            ? "text-muted-foreground"
+            : isError
+              ? "text-destructive"
+              : "text-muted-foreground/90",
+        )}
+      >
+        {isActive ? (
+          <span className="bg-gradient-to-r from-muted-foreground/40 via-foreground/80 to-muted-foreground/40 bg-[length:200%_100%] bg-clip-text text-transparent [animation:shimmer_2.4s_linear_infinite]">
+            {verb}
           </span>
-          {!isActive && (
-            <div className="font-mono text-[10px] text-muted-foreground">
-              <ToolResultSummary toolName={tool.name} result={tool.result} />
-              {typeof tool.durationMs === "number" && (
-                <span className="ml-1 text-muted-foreground/60">· {tool.durationMs}ms</span>
-              )}
-              {isError && <span className="text-destructive">failed</span>}
-            </div>
-          )}
-        </div>
-      </div>
+        ) : (
+          noun
+        )}
+      </span>
+      {!isActive && (
+        <ToolResultSummary toolName={tool.name} result={tool.result} />
+      )}
+      {!isActive && typeof tool.durationMs === "number" && (
+        <span className="ml-auto font-mono text-[10px] text-muted-foreground/50">
+          {tool.durationMs}ms
+        </span>
+      )}
     </div>
   );
 }
 
-function StatusBadge({ isActive, isError }: { isActive: boolean; isError: boolean }) {
-  if (isActive) {
-    return (
-      <div className="z-10 flex size-5 items-center justify-center rounded-full bg-primary/15 outline outline-2 outline-background">
-        <Loader2 className="size-3 animate-spin text-primary" />
-      </div>
-    );
-  }
-  if (isError) {
-    return (
-      <div className="z-10 flex size-5 items-center justify-center rounded-full bg-destructive outline outline-2 outline-background">
-        <X className="size-3 text-destructive-foreground" />
-      </div>
-    );
-  }
-  return (
-    <div className="z-10 flex size-5 items-center justify-center rounded-full bg-emerald-500 outline outline-2 outline-background">
-      <Check className="size-3 text-white" strokeWidth={3} />
-    </div>
-  );
+function StatusDot({ isActive, isError }: { isActive: boolean; isError: boolean }) {
+  if (isActive) return <Loader2 className="size-2.5 shrink-0 animate-spin text-muted-foreground" />;
+  if (isError) return <X className="size-2.5 shrink-0 text-destructive" strokeWidth={3} />;
+  return <Check className="size-2.5 shrink-0 text-emerald-500/80" strokeWidth={3} />;
 }
 
 function ToolResultSummary({ toolName, result }: { toolName: string; result: unknown }) {

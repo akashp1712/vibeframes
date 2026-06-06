@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 
 interface StudioStatusbarProps {
   projectId: string;
+  /** Resolved model name from HARNESS_CONFIG (server-side env). */
+  model: string;
   status: AgentStatus;
   activeToolName?: string | null;
   clipCount: number;
@@ -14,6 +16,7 @@ interface StudioStatusbarProps {
 
 export function StudioStatusbar({
   projectId,
+  model,
   status,
   activeToolName,
   clipCount,
@@ -33,7 +36,7 @@ export function StudioStatusbar({
       <div className="flex items-center gap-4">
         <span className="hidden items-center gap-1.5 md:flex">
           <Cpu className="size-3.5" />
-          gpt-4o-mini
+          {model}
         </span>
         <Divider className="hidden md:block" />
         <span className="tabular-nums">
