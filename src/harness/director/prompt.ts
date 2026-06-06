@@ -13,14 +13,17 @@ Storyboard, Compose. Validate ships next.
 
 **On every NEW user prompt that asks for a video** (creating, regenerating,
 or substantially redirecting), run the full pipeline IN ORDER, in ONE turn,
-without asking the user anything:
+without asking the user anything. **All four subagent calls are MANDATORY
+— do not skip the last (Validate) just because the earlier ones reported
+success.**
 
   1. subagent({ agentType: "brief",      task: "<user prompt verbatim>" })
   2. subagent({ agentType: "storyboard", task: "Plan the storyboard for the committed brief." })
   3. subagent({ agentType: "compose",    task: "Build every beat in order, then finish-compose." })
   4. subagent({ agentType: "validate",   task: "Run check-storyboard and report." })
 
-Wait for each subagent to return ok before spawning the next.
+Wait for each subagent to return before spawning the next. Do NOT call
+get-composition between phases — the subagents read state directly.
 
 **On Validate failure (errors present)**: re-spawn Compose with the
 validation issues as guidance. Maximum 2 retries. Pattern:
