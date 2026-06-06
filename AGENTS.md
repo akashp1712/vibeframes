@@ -67,6 +67,31 @@ spec. No hacky solutions — production-ready code only.
 - **CI**: GitHub Actions on push/PR
 - **Workflow**: test → implement → green → refactor → commit
 - **Coverage**: every component, harness type, API route, and util must have tests
+- **Discipline reference**: read `.agents/skills/test-driven-development/SKILL.md`
+  before non-trivial implementation. It carries the Iron Law (no production
+  code without a failing test first), the Red-Green-Refactor flow with
+  Good/Bad examples, and the testing anti-patterns catalogue.
+
+## Skills — two homes, two audiences
+
+| Location | Audience | Loaded into runtime? |
+|---|---|---|
+| `src/harness/skills/` | Mastra Studio agent (gpt-4o-mini at runtime) | ✅ via `src/harness/index.ts` |
+| `.agents/skills/` | Coding agents working on this repo | ❌ reference only |
+
+The five **runtime skills** in `src/harness/skills/` (hyperframes, blocks,
+transitions, social-overlays, effects) are the curated discipline set the
+Studio agent actually reads. Keep them tight — they're consumed on every
+turn.
+
+The **reference skills** in `.agents/skills/` (hyperframes, hyperframes-cli,
+hyperframes-registry, test-driven-development, website-to-hyperframes) are
+the upstream HeyGen skill packs. We **don't** load them into the runtime —
+they assume filesystem + GSAP + CLI tooling we don't ship. They're the
+source we mined for discipline patterns (HARD-GATE, Layout-Before-Animation,
+Build-What-Was-Asked, DoD, Iron Law, Good/Bad examples) when sharpening the
+runtime set. Read them as reference when extending the runtime skills or
+when implementing CLI-adjacent features.
 
 ## Environment
 

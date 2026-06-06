@@ -150,7 +150,7 @@ description: Core knowledge for building HTML/CSS clips in HyperFrames
 ---
 ```
 
-Today: `src/harness/skills/hyperframes/skill.md`. Tomorrow: `gsap/skill.md`, `lottie/skill.md`, `transitions/skill.md`. The agent gets a built-in `skill` tool to load these on demand.
+Today: 5 focused skill files under `src/harness/skills/` — `hyperframes/` (universal foundation), `blocks/` (scene-building registry), `social-overlays/` (TikTok / IG / X UI), `effects/` (cosmetic textures), `transitions/` (clip-to-clip). Tomorrow: `captions/skill.md`, `gsap/skill.md`, `lottie/skill.md`. The agent gets a built-in `skill` tool to load these on demand.
 
 ## Persistence — zero-config + pluggable
 

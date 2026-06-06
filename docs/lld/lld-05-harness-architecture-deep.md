@@ -373,7 +373,7 @@ By owning the SSE envelope (LLD-04) we keep all of this open.
 | Tool factories    | `src/harness/tools/{add,update,remove,get}-clip.ts`               |
 | Block registry    | `src/harness/services/clip-registry.service.ts`                   |
 | Service types     | `src/harness/services/types.ts`                                   |
-| Skill file        | `src/harness/skills/hyperframes/skill.md`                         |
+| Skill files       | `src/harness/skills/{hyperframes,blocks,social-overlays,effects,transitions}/skill.md` |
 | Composition model | `src/harness/types.ts`, `mutations.ts`, `serialize.ts`            |
 | SSE protocol      | `src/protocol/sse-writer.ts`, `src/protocol/events.ts`            |
 | SSE route         | `src/app/api/chat/route.ts`                                       |

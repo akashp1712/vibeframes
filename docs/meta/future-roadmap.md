@@ -102,12 +102,32 @@ Mark items: `[ ]` open · `[~]` exploring · `[x]` shipped.
 
 ### M10 candidates (current milestone)
 
-#### `[ ]` 1. Broaden HyperFrames catalog — more blocks, skills, tools
-- **What**: Expand the skill bundle at `src/harness/skills/hyperframes/` with additional block primitives (CTA buttons, multi-line lower-thirds, kinetic-type frames, lower-thirds-with-logo, split-screen, end-card). Expose them via new typed tools when needed.
-- **Why interesting**: Most of the agent's intelligence is encoded in the *catalog*. The richer the catalog, the less the LLM has to invent from scratch — fewer hallucinated CSS, fewer broken clips.
-- **Mastra primitives**: `Skill` markdown frontmatter + tool schemas + composition tools (`add-clip`, `update-clip`).
-- **Effort**: Low-medium. Mostly content + a few new tools.
-- **Spike**: catalog one new block per session in the journal.
+#### `[~]` 1. Broaden HyperFrames catalog — more blocks, skills, tools
+
+The HyperFrames docs in `.agents/skills/hyperframes-*` already define a rich vocabulary; we're growing our catalog *up* through three tiers.
+
+**Tier 1 — Static inline blocks + transitions (today, no architecture change)**
+- `src/harness/services/clip-registry.service.ts` — Tailwind HTML fragments with `{{slot}}` vars. Every block has a `kind: "unit" | "composition"` so the agent knows whether to layer it or use it standalone.
+- `src/harness/services/transition-registry.service.ts` — sibling registry for clip transitions, with its own tools (`add-transition`, `get-transition-schemas`) and skill (`skills/transitions/skill.md`).
+- **Status**: **20 blocks shipped** — 3 atomic units + 7 compositions + 1 lower-third unit + 5 social units + 2 follow units + 2 effect-overlay units. Categories now span backgrounds, titles, lower-thirds, scenes, stats, quotes, CTAs, end-cards, social, follow, and effect-overlay. **23 transitions catalogued** — **18 Tier 1** (cut, fade, fade-through-black/white, slide-left/up/stack, zoom-in/out, zoom-punch-in/out, wipe-circle, wipe-diagonal, **wipe-checker**, **iris-open**, **iris-close**, blur-bridge, **glitch-cut**) + 2 Tier 2 stubs (morph-shapes, morph-type) + 3 Tier 3 VFX stubs.
+- **Next here**: the Tier 1 inline-template surface is essentially saturated — every remaining Tier 2 (morph-*) needs SVG path tweening, which belongs in the Tier 2 sub-composition architecture (`add-block { blockId, vars }`) rather than promoted in place. Net catalog growth from here means **new** block / transition categories or **deeper** sub-composition entries, not more promotions.
+
+**Tier 2 — Sub-composition blocks with GSAP timelines (next architecture step)**
+- Source: `.agents/skills/hyperframes/references/techniques.md` (13 techniques), `patterns.md` (PiP, text-behind-subject, title-card-fade, slide-show).
+- **Blocked on**: `add-clip` today only accepts inline `html`. To run real HyperFrames blocks we need it to also accept `data-composition-src` references to standalone HTML files that own their `<script>` + GSAP timeline.
+- **Effort**: Medium. Composition-store changes + a new tool variant (`add-block { blockId, vars }`) that materialises a sub-composition file on disk and references it. The director then picks from a richer registry without seeing the raw HTML.
+- **First targets**: SVG path-drawing logo reveal · per-word kinetic typography · character-by-character typewriter · clip-path reveal masks.
+
+**Tier 3 — Registry VFX blocks (`hyperframes add <name>`)**
+- Source: `.agents/skills/hyperframes-registry/`. Library includes `vfx-magnetic`, `vfx-shatter`, `vfx-liquid-background`, `vfx-portal`, `vfx-iphone-device`, `data-chart`, `grain-overlay`, `shimmer-sweep`, terminal/device mockups.
+- **Blocked on**: Tier 2 *plus* an install pipeline — running `hyperframes add` against the project or shipping the registry items as part of our package.
+- **Effort**: Medium-high. Mostly tooling: a `register-vfx-block` step at boot that lists what's available + extending the agent's tool surface to know each block's parameters.
+
+**Why interesting (the learning angle)**: Most of the agent's intelligence is encoded in the *catalog*, not the prompt. Each tier we climb cuts the agent's token budget for "describe a scene" while expanding what it can actually produce — and Tier 2/3 unlock real motion design (GSAP timelines, WebGL effects) that flat HTML can't express.
+
+**Mastra primitives**: Skill markdown frontmatter + tool schemas (Zod) + new composition tools per tier. Tier 2 also opens the door to **prompts that reference catalog entries by id** instead of asking the LLM to author motion code — that's where item #2 (cost optimisation) intersects.
+
+**Spike cadence**: one tier-1 block per build session; spike tier-2 architecture once we have 3+ patterns the catalog can't currently express.
 
 #### `[ ]` 2. Cost-optimised generation — programmatic blocks + LLM-styled copy
 - **What**: Instead of asking the LLM to produce raw HTML, have it emit a **typed block reference** plus **style tokens** and **copy** (e.g. `{ block: "hero-title", copy: { headline: "Launch.", subtitle: "…" }, style: { palette: "warm-peach", motion: "fade-up" } }`). Our composer assembles the actual HTML server-side from a registered template + Tailwind classes.
@@ -120,6 +140,20 @@ Mark items: `[ ]` open · `[~]` exploring · `[x]` shipped.
 > **Verdict on M10 fit**: Item 1 is a clear M10 fit — it's additive, low-risk, advances the core value prop. **Item 2 should start as a research spike during M10 and ship in M11.** It's a meaningful rework of the composer's contract; doing it half-baked risks slipping M10. Treat M10 as the place we *prove* the spike, not where we ship the rewrite.
 
 ### Post-M10 (M11+)
+
+#### `[ ]` 2a. Captions — registry, tools, skill, renderer
+
+- **What**: Add captions as a first-class layer alongside clips and transitions. New `caption-registry.service.ts`, `add-caption-cue` / `get-caption-styles` tools, `skills/captions/skill.md`, and a `CaptionTrack` field on the Composition model. Three Tier 1 styles (`caption-classic`, `caption-tiktok`, `caption-bold-accent`) ship first; kinetic / typewriter / bilingual queue as Tier 2 stubs.
+- **Why interesting**: Short-form social video lives or dies on captions (~80% silent watching). Adopting captions turns VibeFrames from "make a clip" into "make a clip that converts on a phone".
+- **Plan**: see `docs/lld/lld-07-captions.md` — model, registry, tools, three-phase pipeline (pre-timed → script-splitter → audio-aligned), and adoption order C1–C5.
+- **Effort**: Medium. C1 ships entirely as track-overlay clips (no renderer change); C3+ needs a first-class caption layer (post Studio Tier A).
+
+#### `[ ]` 2b. `@hyperframes/studio` adoption — Player, Timeline, Inspector
+
+- **What**: Adopt the official `@hyperframes/studio` React components in slices — Player + TransportControls first, then Timeline, then ClipInspector — instead of hand-rolling everything around the iframe.
+- **Why interesting**: Catalog growth pushes the Studio chrome to do more (scrubbing, multi-track editing, drag/drop, per-clip property panels). Adopting the Studio package once it exists is cheaper than re-building each piece.
+- **Plan**: see `docs/lld/lld-06-studio-adoption.md` — four tiers (A: Player, B: Timeline, C: Inspector, D: EditorShell), each with pre-reqs, risks, and conflict-resolution policies for user-vs-agent edits.
+- **Effort**: Tiered. Tier A is small (1–2 sessions); each subsequent tier compounds value. Tier C requires a model migration (clips carry `blockId + vars`, not just rendered `html`) which dovetails with item #2 (cost-optimised generation).
 
 #### `[ ]` 3. Harness observability
 - **What**: Wire up Mastra's tracing/telemetry — per-run timeline of state transitions, tool calls, LLM calls (with token counts and latency), SSE events emitted. Surface in a `/studio/runs/[runId]` debug pane.
