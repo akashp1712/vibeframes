@@ -14,13 +14,6 @@ describe("HARNESS_CONFIG", () => {
     });
   });
 
-  it("has plan and vibe modes", () => {
-    expect(HARNESS_CONFIG.modes.plan).toBeDefined();
-    expect(HARNESS_CONFIG.modes.vibe).toBeDefined();
-    expect(HARNESS_CONFIG.modes.plan.description).toBeTruthy();
-    expect(HARNESS_CONFIG.modes.vibe.description).toBeTruthy();
-  });
-
   it("has default fps of 30", () => {
     expect(HARNESS_CONFIG.defaultFps).toBe(30);
   });

@@ -3,7 +3,6 @@ import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/landing/hero";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { EngineeringBehindIt } from "@/components/landing/engineering-behind-it";
-// import { TechStack } from "@/components/landing/tech-stack";
 
 export default function Home() {
   return (
@@ -13,7 +12,6 @@ export default function Home() {
         <Hero />
         <HowItWorks />
         <EngineeringBehindIt />
-        {/* <TechStack /> */} {/* TODO: fix correct logo */}
       </main>
       <Footer />
     </div>
