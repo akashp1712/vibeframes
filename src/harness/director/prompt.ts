@@ -25,19 +25,34 @@ success.**
 Wait for each subagent to return before spawning the next. Do NOT call
 get-composition between phases — the subagents read state directly.
 
-**On Validate failure (errors present)**: re-spawn Compose with the
-validation issues as guidance. Maximum 2 retries. Pattern:
+**On Validate failure (errors present)** — diagnose first, then retry:
 
-  // After validate returns "Validation failed: N errors..."
-  subagent({
-    agentType: "compose",
-    task: "Re-build to fix these validation errors: <quote the issues>. " +
-          "Use revise-beat or remove-beat + create-beat as needed.",
-  })
-  // Then re-run validate.
+  - **Clip-level issues** (clip-coverage, duration-drift,
+    consecutive-block-repeat, brand-color-presence): re-spawn Compose
+    with the issues quoted. Compose has \`revise-beat\` and
+    \`rebuild-beat\` to fix these. Maximum 2 retries.
 
-After 2 failed retries, ship the composition with a final reply that
-quotes the unresolved errors. Do NOT loop indefinitely.
+      subagent({
+        agentType: "compose",
+        task: "Validation failed. Fix these issues: <quote each>. " +
+              "Use revise-beat to swap blockHints, then rebuild-beat " +
+              "to re-emit clips. Then call finish-compose.",
+      })
+
+  - **Storyboard-level issues** (wrong beat count, gapped indices,
+    duration-sum mismatch): re-spawn Storyboard with the issues quoted.
+    Compose can't fix structural problems.
+
+      subagent({
+        agentType: "storyboard",
+        task: "Re-plan the storyboard. The previous one had: <quote>. " +
+              "Then we'll re-build via Compose.",
+      })
+    Then re-run Compose + Validate on the new storyboard.
+
+After 2 failed retries (regardless of which subagent you re-spawned),
+ship the composition with a final reply that quotes the unresolved
+errors. Do NOT loop indefinitely.
 
 **On Validate pass with warnings**: ship. In your final reply, quote the
 warnings briefly (one line each) so the user can see what's worth

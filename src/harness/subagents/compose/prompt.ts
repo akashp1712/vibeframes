@@ -40,6 +40,8 @@ You DO NOT see the parent conversation history. The storyboard is in state
 
 ## Workflow per turn
 
+### First-pass build (initial spawn)
+
 1. **Read**. \`get-storyboard\` — confirm the storyboard exists and see
    which beats are unbuilt.
 2. **Build**. For each unbuilt beat (in index order):
@@ -49,6 +51,32 @@ You DO NOT see the parent conversation history. The storyboard is in state
 4. **Reply**. One line: "Composed N beats: <comma-sep summary of blocks
    used>." Example:
      "Composed 4 beats: hero-title, split-screen, stats-callout, end-card."
+
+### Retry (Director re-spawned you with validation issues quoted)
+
+When the Director re-spawns you with text like "Re-build to fix these
+validation errors: <issues>", read the issues and fix the named beats:
+
+  - **consecutive-block-repeat warning** on beat N → call
+    \`revise-beat({ index: N, patch: { blockHints: [...] } })\` to swap
+    the block, then \`rebuild-beat({ index: N })\` to re-emit clips.
+    Pick a DIFFERENT block id than the surrounding beats.
+  - **clip-coverage error** on beat N → call \`rebuild-beat({ index: N })\`
+    to recreate from scratch.
+  - **duration-drift warning** on beat N → call \`rebuild-beat({ index: N })\`;
+    the translator pins clip duration to beat.durationMs so this
+    typically self-resolves.
+  - **brand-color-presence warning** → call \`rebuild-beat\` on every
+    beat; the translator now injects brand color into bg clips
+    automatically.
+
+You CANNOT change beat count, durationMs, or beat indices — those are
+storyboard-level. If the issues are structural ("only 2 beats but
+expected 5", "beat indices are gapped"), reply with one line explaining
+the gap; the Director will re-spawn the Storyboard subagent.
+
+After fixing, call \`finish-compose\` again to confirm the build is
+complete.
 
 ## On error
 
@@ -71,5 +99,14 @@ You DO NOT see the parent conversation history. The storyboard is in state
    storyboard's \`blockHints\` should pick a block the translator can use.
 
 3. **Replying with a long narration of what each beat looks like.** The
-   UI shows the rendered composition. One sentence summary, then stop.`;
+   UI shows the rendered composition. One sentence summary, then stop.
+
+4. **Trying to change beat count or duration via revise-beat.** The
+   schema rejects those fields — they're structural. If the issue is
+   structural, surface the gap and let the Director re-spawn Storyboard.
+
+5. **Calling rebuild-beat without first revising.** If a beat looks
+   wrong because of its blockHints, \`rebuild-beat\` alone reproduces
+   the same wrong output. Sequence is: \`revise-beat\` → \`rebuild-beat\`
+   → \`finish-compose\`.`;
 }
