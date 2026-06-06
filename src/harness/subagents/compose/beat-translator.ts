@@ -184,20 +184,38 @@ function bgClassForBrand(brief: Brief): string {
 }
 
 /**
+ * Strict allowlist for brand color values. We accept short / standard
+ * hex codes only (3, 4, 6, or 8 hex digits with a leading #).
+ *
+ * Why so strict: the value is interpolated into an inline `style="..."`
+ * attribute and concatenated into HTML. A loose validator (e.g. "any
+ * css color" or rgb(...)) would let crafted input break out of the
+ * attribute or the CSS context. Even though the brief comes from the
+ * LLM rather than the user directly, a prompt-injected brand value or a
+ * future DESIGN.md import could feed an attacker-chosen string. Hex is
+ * sufficient for what we render — keep it tight.
+ */
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+export function safeHexColor(input: string | undefined | null): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  return HEX_COLOR_RE.test(trimmed) ? trimmed : null;
+}
+
+/**
  * Build a brand-color accent overlay for the background clip. Renders a
  * subtle bottom-edge gradient bar in the brand's primaryColor — visible
  * enough to feel branded, not so loud it competes with the main content.
  *
- * Returning empty string when no primaryColor is set lets the caller
- * concatenate without conditional branching.
+ * Strict input validation: only hex colors are accepted. Anything else
+ * (named colors, rgb(...), css variables, malformed values, attempted
+ * attribute escapes) returns "" and the accent is skipped — defense
+ * against the inline-style attribute being used as an injection vector.
  */
 function brandAccent(brief: Brief): string {
-  const color = brief.brand.primaryColor;
+  const color = safeHexColor(brief.brand.primaryColor);
   if (!color) return "";
-  // Inline style so the literal hex appears in the rendered HTML — this
-  // is what the brand-color-presence validation rule looks for. Tailwind
-  // arbitrary-value classes like `bg-[#5E6AD2]` would also work but
-  // depend on the runtime building Tailwind on the fly.
   return (
     `<div class="absolute inset-x-0 bottom-0 h-1.5" ` +
     `style="background: linear-gradient(to right, transparent, ${color}, transparent);"></div>`

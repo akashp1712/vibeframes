@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   computeBeatStartMs,
+  safeHexColor,
   translateBeat,
   translateStoryboard,
 } from "../beat-translator";
@@ -61,6 +62,45 @@ const beats: Beat[] = [
 ];
 
 const storyboard: Storyboard = { rhythm: "arc", beats };
+
+describe("safeHexColor", () => {
+  it("accepts standard 6-digit hex", () => {
+    expect(safeHexColor("#5E6AD2")).toBe("#5E6AD2");
+    expect(safeHexColor("#000000")).toBe("#000000");
+  });
+  it("accepts 3, 4, and 8-digit hex", () => {
+    expect(safeHexColor("#abc")).toBe("#abc");
+    expect(safeHexColor("#abcd")).toBe("#abcd");
+    expect(safeHexColor("#a1b2c3d4")).toBe("#a1b2c3d4");
+  });
+  it("trims whitespace", () => {
+    expect(safeHexColor("  #5E6AD2  ")).toBe("#5E6AD2");
+  });
+  it("rejects null/undefined/empty", () => {
+    expect(safeHexColor(null)).toBeNull();
+    expect(safeHexColor(undefined)).toBeNull();
+    expect(safeHexColor("")).toBeNull();
+  });
+  it("rejects non-hex CSS color forms", () => {
+    expect(safeHexColor("red")).toBeNull();
+    expect(safeHexColor("rgb(255,0,0)")).toBeNull();
+    expect(safeHexColor("rgba(0,0,0,1)")).toBeNull();
+    expect(safeHexColor("hsl(0,100%,50%)")).toBeNull();
+    expect(safeHexColor("var(--brand)")).toBeNull();
+    expect(safeHexColor("currentColor")).toBeNull();
+  });
+  it("rejects malformed hex (wrong length, missing #)", () => {
+    expect(safeHexColor("5E6AD2")).toBeNull();
+    expect(safeHexColor("#5E6AD")).toBeNull(); // 5 digits
+    expect(safeHexColor("#5E6AD2X")).toBeNull();
+    expect(safeHexColor("#xyzxyz")).toBeNull();
+  });
+  it("rejects attribute-escape attempts", () => {
+    expect(safeHexColor('#5E6AD2"); --x: url(')).toBeNull();
+    expect(safeHexColor("#5E6AD2</style>")).toBeNull();
+    expect(safeHexColor('#5E6AD2" onload="alert(1)')).toBeNull();
+  });
+});
 
 describe("computeBeatStartMs", () => {
   it("returns 0 for the first beat", () => {
@@ -152,6 +192,34 @@ describe("translateBeat", () => {
     const t = translateBeat({ beat: beats[0]!, storyboard, brief: briefSansColor, catalog });
     const bg = t.clips.find((c) => c.trackId === "track-bg")!;
     expect(bg.html).not.toContain("#");
+  });
+
+  it("rejects an unsafe primaryColor (CSS-injection attempt) and emits no brand accent", () => {
+    const malicious: Brief = {
+      ...brief,
+      brand: {
+        name: "Linear",
+        primaryColor: '#5E6AD2"); --x: url(javascript:alert(1)',
+      },
+    };
+    const t = translateBeat({ beat: beats[0]!, storyboard, brief: malicious, catalog });
+    const bg = t.clips.find((c) => c.trackId === "track-bg")!;
+    // The unsafe value must NOT appear anywhere in the rendered HTML —
+    // not the original literal, not a partial.
+    expect(bg.html).not.toContain("javascript:");
+    expect(bg.html).not.toContain("--x:");
+    expect(bg.html).not.toContain('");');
+    // No accent div either (safeHexColor returned null → brandAccent → "").
+    expect(bg.html).not.toContain("linear-gradient");
+  });
+
+  it("rejects rgb(), named colors, and css variables", () => {
+    for (const bad of ["rgb(255,0,0)", "red", "var(--brand)", "rgba(0,0,0,1)"]) {
+      const b: Brief = { ...brief, brand: { name: "X", primaryColor: bad } };
+      const t = translateBeat({ beat: beats[0]!, storyboard, brief: b, catalog });
+      const bg = t.clips.find((c) => c.trackId === "track-bg")!;
+      expect(bg.html).not.toContain("linear-gradient");
+    }
   });
 
   it("brand-accent satisfies the brand-color-presence rule (>=30% of clips)", () => {
