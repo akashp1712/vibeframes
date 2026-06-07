@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatMessage as CustomChatMessage, AgentStatus } from "@/harness/react/use-harness-chat";
-import { Film, Send, Loader2, MessageSquare, Sparkles } from "lucide-react";
+import { Film, Send, Loader2, Sparkles } from "lucide-react";
 import { EphemeralStatus } from "./ephemeral-status";
 import { useRef, useEffect, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -72,10 +72,6 @@ export function ChatPanel({
 
   return (
     <div className="flex w-80 shrink-0 flex-col overflow-hidden border-r border-border bg-background lg:w-96">
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-4">
-        <MessageSquare className="size-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground">Chat</span>
-      </div>
 
       <ScrollArea ref={scrollRef} className="min-h-0 flex-1">
         <div className="p-4">

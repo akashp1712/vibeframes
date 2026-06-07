@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { ChatMessage } from "../message";
 import type { ChatMessage as CustomChatMessage, ToolCall } from "@/harness/react/use-harness-chat";
 
@@ -21,19 +21,12 @@ describe("ChatMessage", () => {
     expect(container.textContent).toContain("Make a 5-second intro");
   });
 
-  it("labels user messages as 'You'", () => {
-    const { container } = render(<ChatMessage message={userMessage} />);
-    expect(container.textContent).toContain("You");
-  });
+  it("does not render 'You' or 'Agent' labels anymore", () => {
+    const { container: c1 } = render(<ChatMessage message={userMessage} />);
+    expect(c1.textContent).not.toContain("You");
 
-  it("labels assistant messages as 'Agent'", () => {
-    const { container } = render(<ChatMessage message={assistantMessage} />);
-    expect(container.textContent).toContain("Agent");
-  });
-
-  it("renders assistant message content", () => {
-    const { container } = render(<ChatMessage message={assistantMessage} />);
-    expect(container.textContent).toContain("I will create a title card with a fade-in.");
+    const { container: c2 } = render(<ChatMessage message={assistantMessage} />);
+    expect(c2.textContent).not.toContain("Agent");
   });
 
   describe("markdown rendering in assistant messages", () => {
@@ -153,18 +146,18 @@ describe("ChatMessage", () => {
           }}
         />,
       );
-      // Activity header sits ABOVE the assistant content bubble.
-      const header = container.querySelector('[data-testid="activity-header"]');
+      const items = container.querySelectorAll('[data-testid="activity-item"]');
       const content = container.querySelector('[data-testid="assistant-content"]');
-      expect(header, "activity header must exist").not.toBeNull();
+      expect(items.length).toBe(3);
       expect(content, "content bubble must exist").not.toBeNull();
+      // First item is rendered before content
       expect(
-        header!.compareDocumentPosition(content!) & Node.DOCUMENT_POSITION_FOLLOWING,
+        items[0]!.compareDocumentPosition(content!) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
     });
 
-    it("collapses tools into a summary once the assistant has produced content", () => {
-      const { container, getByRole } = render(
+    it("does NOT collapse tools, always flat stream", () => {
+      const { container } = render(
         <ChatMessage
           message={{
             id: "a",
@@ -174,57 +167,10 @@ describe("ChatMessage", () => {
           }}
         />,
       );
-      // Collapsed: header visible, no item rows rendered
-      expect(container.querySelector('[data-testid="activity-header"]')).not.toBeNull();
-      expect(container.querySelectorAll('[data-testid="activity-item"]')).toHaveLength(0);
-      // Click the header toggle → items appear
-      fireEvent.click(getByRole("button", { name: /show.*action|activity/i }));
       expect(container.querySelectorAll('[data-testid="activity-item"]')).toHaveLength(3);
     });
 
-    it("expanded view places the toggle in the HEADER (top), not at the bottom", () => {
-      const { container, getByRole } = render(
-        <ChatMessage
-          message={{
-            id: "a",
-            role: "assistant",
-            content: "All done.",
-            tools: doneTools,
-          }}
-        />,
-      );
-      // Expand
-      fireEvent.click(getByRole("button", { name: /show.*action|activity/i }));
-      // Header (with toggle) must appear BEFORE the first item in the DOM
-      const header = container.querySelector('[data-testid="activity-header"]');
-      const firstItem = container.querySelector('[data-testid="activity-item"]');
-      expect(header).not.toBeNull();
-      expect(firstItem).not.toBeNull();
-      expect(
-        header!.compareDocumentPosition(firstItem!) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      // And no separate "Collapse" button hanging at the bottom of the list
-      expect(container.querySelector('[data-testid="bottom-collapse"]')).toBeNull();
-    });
-
-    it("does NOT render the heavy timeline rail (no connector lines)", () => {
-      const { container, getByRole } = render(
-        <ChatMessage
-          message={{
-            id: "a",
-            role: "assistant",
-            content: "All done.",
-            tools: doneTools,
-          }}
-        />,
-      );
-      fireEvent.click(getByRole("button", { name: /show.*action|activity/i }));
-      // The previous design used [data-testid="activity-rail"] for the
-      // connector between status badges. The redesigned stream is flat.
-      expect(container.querySelector('[data-testid="activity-rail"]')).toBeNull();
-    });
-
-    it("does NOT collapse while a tool is still calling", () => {
+    it("renders the active state for in-flight tools", () => {
       const { container } = render(
         <ChatMessage
           message={{
@@ -235,11 +181,10 @@ describe("ChatMessage", () => {
           }}
         />,
       );
-      // Even with content present, an in-flight tool keeps items visible
-      expect(container.querySelectorAll('[data-testid="activity-item"]').length).toBeGreaterThan(0);
+      expect(container.querySelectorAll('[data-testid="activity-item"]').length).toBe(4);
     });
 
-    it("does NOT collapse if there is no assistant content yet (tools-only state)", () => {
+    it("renders if there is no assistant content yet (tools-only state)", () => {
       const { container } = render(
         <ChatMessage
           message={{

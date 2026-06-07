@@ -1,43 +1,121 @@
-import { Code2 } from "lucide-react";
+import { Code2, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface CodePanelProps {
   html: string | null;
 }
 
 export function CodePanel({ html }: CodePanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  
   const lines = useMemo(() => (html ? formatHtml(html).split("\n") : []), [html]);
 
+  const handleCopy = () => {
+    if (!html) return;
+    navigator.clipboard.writeText(html).catch(() => {
+      // Clipboard write requires user gesture or Clipboard API permission.
+      // Silently no-op if denied — the user will notice nothing happened.
+    });
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   return (
-    <div className="hidden w-80 shrink-0 flex-col overflow-hidden border-l border-border bg-background lg:flex xl:w-96">
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-card/40 px-4">
-        <Code2 className="size-3.5 text-muted-foreground" />
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Composition HTML
-        </span>
-      </div>
-      {html ? (
-        <ScrollArea className="min-h-0 flex-1">
-          <div className="flex font-mono text-[11px] leading-[1.6]">
-            {/* Line numbers gutter */}
-            <div className="sticky left-0 select-none border-r border-border bg-card/40 px-2 py-3 text-right text-muted-foreground/50">
-              {lines.map((_, i) => (
-                <div key={i}>{i + 1}</div>
-              ))}
-            </div>
-            {/* Code content */}
-            <pre className="flex-1 overflow-x-auto px-3 py-3 text-foreground">
-              {lines.map((line, i) => (
-                <div key={i} dangerouslySetInnerHTML={{ __html: highlightHtmlLine(line) || "&nbsp;" }} />
-              ))}
-            </pre>
+    <div
+      className={cn(
+        "hidden shrink-0 flex-col overflow-hidden border-l border-border bg-background transition-all duration-200 lg:flex",
+        isOpen ? "w-80 xl:w-96" : "w-10 cursor-pointer hover:bg-muted/30"
+      )}
+      onClick={!isOpen ? () => setIsOpen(true) : undefined}
+    >
+      {/* Collapsed State */}
+      {!isOpen && (
+        <div className="flex h-full flex-col items-center py-4">
+        <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(true);
+            }}
+            className="flex items-center justify-center rounded-md p-1 hover:bg-muted text-muted-foreground transition-colors mb-4"
+            aria-label="Expand code panel"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <div className="flex items-center justify-center flex-1">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground [writing-mode:vertical-rl] rotate-180">
+              Composition HTML
+            </span>
           </div>
-        </ScrollArea>
-      ) : (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-xs text-muted-foreground/60">HTML source will appear here.</p>
         </div>
+      )}
+
+      {/* Expanded State */}
+      {isOpen && (
+        <>
+          <div className="flex h-10 shrink-0 items-center justify-between border-b border-border bg-card/40 px-4">
+            <div className="flex items-center gap-2">
+              <Code2 className="size-3.5 text-muted-foreground" />
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Composition HTML
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleCopy}
+                disabled={!html}
+                aria-label={isCopied ? "Copied" : "Copy HTML to clipboard"}
+                className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="size-3 text-emerald-500" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3" />
+                    Copy
+                  </>
+                )}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                }}
+                className="flex items-center justify-center rounded-md p-1 hover:bg-muted text-muted-foreground transition-colors ml-1"
+                aria-label="Collapse code panel"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+          </div>
+          {html ? (
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="flex font-mono text-[11px] leading-[1.6]">
+                {/* Line numbers gutter */}
+                <div className="sticky left-0 select-none border-r border-border bg-card/40 px-2 py-3 text-right text-muted-foreground/50">
+                  {lines.map((_, i) => (
+                    <div key={i}>{i + 1}</div>
+                  ))}
+                </div>
+                {/* Code content */}
+                <pre className="flex-1 overflow-x-auto px-3 py-3 text-foreground">
+                  {lines.map((line, i) => (
+                    <div key={i} dangerouslySetInnerHTML={{ __html: highlightHtmlLine(line) || "&nbsp;" }} />
+                  ))}
+                </pre>
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="flex flex-1 items-center justify-center">
+              <p className="text-xs text-muted-foreground/60">HTML source will appear here.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

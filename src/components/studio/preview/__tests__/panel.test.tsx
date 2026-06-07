@@ -48,7 +48,7 @@ describe("PreviewPanel", () => {
       const { container } = render(
         <PreviewPanel html={oldHtml} isLoading={true} />,
       );
-      expect(container.textContent).toMatch(/building/i);
+      expect(container.textContent).toMatch(/composing/i);
     });
 
     it("hides the Building… state and shows the new iframe when isLoading flips to false", () => {
@@ -56,7 +56,7 @@ describe("PreviewPanel", () => {
         <PreviewPanel html={oldHtml} isLoading={true} />,
       );
       expect(container.querySelector("iframe")).toBeNull();
-      expect(container.textContent).toMatch(/building/i);
+      expect(container.textContent).toMatch(/composing/i);
 
       rerender(<PreviewPanel html={newHtml} isLoading={false} />);
       const iframe = container.querySelector("iframe") as HTMLIFrameElement | null;

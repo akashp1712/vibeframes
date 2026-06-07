@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { Play } from "lucide-react";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { DotPattern } from "@/components/ui/dot-pattern";
@@ -169,7 +169,7 @@ export function PreviewPanel({
   const [displayHtml, setDisplayHtml] = useState<string | null>(html);
   useEffect(() => {
     if (!isLoading || displayHtml === null) {
-      setDisplayHtml(html);
+      startTransition(() => setDisplayHtml(html));
     }
   }, [html, isLoading, displayHtml]);
 
@@ -191,7 +191,7 @@ export function PreviewPanel({
 
   // Reset cursor whenever the composition itself changes (new key on iframe).
   useEffect(() => {
-    setPlayheadSec(0);
+    startTransition(() => setPlayheadSec(0));
   }, [displayHtml]);
 
   return (
@@ -237,27 +237,56 @@ export function PreviewPanel({
 
 function BuildingState() {
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-      <DotPattern
-        className={cn(
-          "[mask-image:radial-gradient(ellipse_at_center,white,transparent_70%)]",
-          "text-foreground/15",
-        )}
-        glow
-      />
-      <div className="relative flex flex-col items-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur-sm">
-          <span className="relative flex size-3">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/70" />
-            <span className="relative inline-flex size-3 rounded-full bg-primary" />
-          </span>
+    <div className="relative flex h-full w-full flex-col items-center justify-center p-8">
+      {/* Dark Stage Card */}
+      <div className="relative flex aspect-video w-full max-w-4xl flex-col items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-[#111111] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.35)]">
+        
+        {/* Waveforms */}
+        <div className="flex h-32 items-end justify-center gap-1.5 opacity-90">
+          {[
+            { h: "h-4", delay: "0ms" },
+            { h: "h-8", delay: "100ms" },
+            { h: "h-16", delay: "200ms" },
+            { h: "h-6", delay: "300ms" },
+            { h: "h-24", delay: "400ms" },
+            { h: "h-10", delay: "500ms" },
+            { h: "h-20", delay: "600ms" },
+            { h: "h-14", delay: "700ms" },
+            { h: "h-6", delay: "800ms" },
+            { h: "h-16", delay: "900ms" },
+            { h: "h-8", delay: "1000ms" },
+            { h: "h-20", delay: "1100ms" },
+            { h: "h-12", delay: "1200ms" },
+            { h: "h-5", delay: "1300ms" },
+          ].map((bar, i) => (
+            <div
+              key={i}
+              className={cn(
+                "w-1.5 rounded-full bg-gradient-to-t from-orange-600 to-stone-400 animate-pulse",
+                bar.h
+              )}
+              style={{ animationDelay: bar.delay, animationDuration: "1.2s" }}
+            />
+          ))}
         </div>
-        <AnimatedShinyText className="text-sm font-medium">
-          Building your composition
-        </AnimatedShinyText>
-        <p className="max-w-xs text-xs text-muted-foreground/70">
-          Preview appears here when the agent finishes the turn.
-        </p>
+
+        {/* Progress Bar Track */}
+        <div className="mt-8 h-1 w-64 overflow-hidden rounded-full bg-white/10">
+          {/* Shimmer fill */}
+          <div className="h-full w-full bg-gradient-to-r from-orange-600/20 via-orange-500 to-orange-600/20 bg-[length:200%] [animation:shimmer_2s_linear_infinite]" />
+        </div>
+
+        <div className="mt-3 font-mono text-[10px] text-stone-500">
+          composing...
+        </div>
+      </div>
+
+      {/* Outside Labels */}
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <p className="text-sm font-medium text-stone-600">Composing your video</p>
+        <span className="rounded-md bg-stone-200/50 px-2.5 py-1 text-xs text-stone-500">
+          ~8s remaining
+        </span>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { useEffect, useRef, useState, startTransition } from "react";
 import type { AgentStatus } from "@/harness/react/use-harness-chat";
 import { toolVerb } from "@/lib/tool-labels";
 import { cn } from "@/lib/utils";
@@ -36,8 +35,8 @@ export function EphemeralStatus({ status, activeToolName }: EphemeralStatusProps
   // Rotate thinking synonyms every 2.4s, only while in thinking state.
   useEffect(() => {
     if (status !== "thinking") {
-      const id = setTimeout(() => setThinkingIdx(0), 0);
-      return () => clearTimeout(id);
+      startTransition(() => setThinkingIdx(0));
+      return;
     }
     const id = setInterval(() => {
       setThinkingIdx((i) => (i + 1) % THINKING_PHRASES.length);
@@ -78,19 +77,25 @@ export function EphemeralStatus({ status, activeToolName }: EphemeralStatusProps
   const phrase = visible.phrase;
 
   return (
-    <div className="flex items-center gap-2 pl-1 pt-1">
-      <Sparkles className="size-3 animate-pulse text-primary" />
-      {/* key change forces a fade-in remount when phrase swaps */}
-      <span
-        key={phrase}
-        className={cn(
-          "text-[12px] italic text-muted-foreground",
-          "animate-in fade-in-0 slide-in-from-bottom-0.5 duration-300",
-        )}
-      >
-        {phrase}
-        <DotsTrail />
-      </span>
+    <div className="mt-1 w-full pl-3">
+      <div className="flex flex-col border-l-2 border-stone-200 py-1">
+        <div className="relative flex items-center gap-2 py-1.5 pl-5 pr-2 min-h-8 bg-[#fff8f3] rounded-r-md">
+          <span className="absolute left-[-5px] top-1/2 -translate-y-1/2 flex size-[10px] items-center justify-center">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-75" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-orange-700" />
+          </span>
+          <span
+            key={phrase}
+            className={cn(
+              "text-sm font-semibold text-slate-900",
+              "animate-in fade-in-0 slide-in-from-bottom-0.5 duration-300",
+            )}
+          >
+            {phrase}
+            <DotsTrail />
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
