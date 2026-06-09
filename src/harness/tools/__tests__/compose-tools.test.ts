@@ -79,7 +79,7 @@ describe("create-beat", () => {
 
   it("emits clips and marks the beat built", async () => {
     const ctx = makeStubCtx();
-    const r = (await tool.execute!({ index: 1 }, ctx as unknown as Parameters<typeof tool.execute>[1])) as {
+    const r = (await tool.execute!({ index: 1 }, ctx as unknown as Parameters<NonNullable<typeof tool.execute>>[1])) as {
       ok: boolean;
       clipIds?: string[];
       blocksUsed?: string[];
@@ -102,7 +102,7 @@ describe("revise-beat", () => {
         index: 1,
         patch: { blockHints: ["split-screen"], techniques: ["new-tech-a", "new-tech-b"] },
       },
-      ctx as unknown as Parameters<typeof tool.execute>[1],
+      ctx as unknown as Parameters<NonNullable<typeof tool.execute>>[1],
     )) as { ok: boolean };
     expect(r.ok).toBe(true);
     const beat = ctx.state.storyboard!.beats.find((b) => b.index === 1);
@@ -115,7 +115,7 @@ describe("revise-beat", () => {
     const r = (await tool.execute!(
       // @ts-expect-error — runtime should reject the schema validation
       { index: 1, patch: { durationMs: 9999 } },
-      ctx as unknown as Parameters<typeof tool.execute>[1],
+      ctx as unknown as Parameters<NonNullable<typeof tool.execute>>[1],
     )) as { ok: boolean };
     // Mastra strips unknown keys from the patch, so the tool succeeds but
     // durationMs is unchanged.
@@ -128,7 +128,7 @@ describe("revise-beat", () => {
     const ctx = makeStubCtx();
     const r = (await tool.execute!(
       { index: 99, patch: { blockHints: ["x"] } },
-      ctx as unknown as Parameters<typeof tool.execute>[1],
+      ctx as unknown as Parameters<NonNullable<typeof tool.execute>>[1],
     )) as { ok: boolean; error?: string };
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/no beat with index 99/);
@@ -143,7 +143,7 @@ describe("rebuild-beat", () => {
   it("removes existing clips and re-emits with new blockHints", async () => {
     const ctx = makeStubCtx();
     // First build with hero-title
-    const created = (await create.execute!({ index: 1 }, ctx as unknown as Parameters<typeof create.execute>[1])) as {
+    const created = (await create.execute!({ index: 1 }, ctx as unknown as Parameters<NonNullable<typeof create.execute>>[1])) as {
       ok: boolean;
       clipIds: string[];
       blocksUsed: string[];
@@ -154,11 +154,11 @@ describe("rebuild-beat", () => {
     // Revise to use split-screen
     await revise.execute!(
       { index: 1, patch: { blockHints: ["split-screen"] } },
-      ctx as unknown as Parameters<typeof revise.execute>[1],
+      ctx as unknown as Parameters<NonNullable<typeof revise.execute>>[1],
     );
 
     // Rebuild
-    const rebuilt = (await rebuild.execute!({ index: 1 }, ctx as unknown as Parameters<typeof rebuild.execute>[1])) as {
+    const rebuilt = (await rebuild.execute!({ index: 1 }, ctx as unknown as Parameters<NonNullable<typeof rebuild.execute>>[1])) as {
       ok: boolean;
       clipIds: string[];
       blocksUsed: string[];
@@ -178,7 +178,7 @@ describe("rebuild-beat", () => {
 
   it("works on a never-built beat (acts like create-beat)", async () => {
     const ctx = makeStubCtx();
-    const r = (await rebuild.execute!({ index: 2 }, ctx as unknown as Parameters<typeof rebuild.execute>[1])) as {
+    const r = (await rebuild.execute!({ index: 2 }, ctx as unknown as Parameters<NonNullable<typeof rebuild.execute>>[1])) as {
       ok: boolean;
       clipIds: string[];
     };
@@ -190,7 +190,7 @@ describe("rebuild-beat", () => {
 
   it("rejects when no brief is committed", async () => {
     const ctx = makeStubCtx({ brief: null });
-    const r = (await rebuild.execute!({ index: 1 }, ctx as unknown as Parameters<typeof rebuild.execute>[1])) as {
+    const r = (await rebuild.execute!({ index: 1 }, ctx as unknown as Parameters<NonNullable<typeof rebuild.execute>>[1])) as {
       ok: boolean;
       error?: string;
     };
@@ -209,14 +209,14 @@ describe("finish-compose", () => {
         beats: baseStoryboard.beats.map((b) => ({ ...b, built: true, clipIds: ["c1"] })),
       },
     });
-    const r = (await tool.execute!({}, ctx as unknown as Parameters<typeof tool.execute>[1])) as { ok: boolean; beatCount?: number };
+    const r = (await tool.execute!({}, ctx as unknown as Parameters<NonNullable<typeof tool.execute>>[1])) as { ok: boolean; beatCount?: number };
     expect(r.ok).toBe(true);
     expect(r.beatCount).toBe(3);
   });
 
   it("ok:false with missing indices when some beats are unbuilt", async () => {
     const ctx = makeStubCtx();
-    const r = (await tool.execute!({}, ctx as unknown as Parameters<typeof tool.execute>[1])) as { ok: boolean; error?: string };
+    const r = (await tool.execute!({}, ctx as unknown as Parameters<NonNullable<typeof tool.execute>>[1])) as { ok: boolean; error?: string };
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/unbuilt beats: 1, 2, 3/);
   });
