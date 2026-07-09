@@ -72,7 +72,7 @@ export function getComposition(projectId: string): Composition {
   const existing = compositions.get(projectId);
   if (existing) return existing;
 
-  const fresh = createEmptyComposition("Untitled");
+  const fresh = createEmptyComposition();
   compositions.set(projectId, fresh);
   persistToDisk(projectId, fresh);
   return fresh;

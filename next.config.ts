@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
     root: resolve("."),
   },
 
+  // Remotion's renderer/bundler are heavy node-only packages (they shell out
+  // to esbuild + a headless browser). Keep them out of the bundler graph so
+  // the /api/render route requires them at runtime instead.
+  serverExternalPackages: [
+    "@remotion/bundler",
+    "@remotion/renderer",
+    "esbuild",
+  ],
+
   // The Cascade browser preview proxies to 127.0.0.1:<port>, which Next.js
   // treats as cross-origin from the canonical http://localhost:3000 and
   // blocks dev-only resources (HMR socket, _next/static, _next/webpack-hmr).

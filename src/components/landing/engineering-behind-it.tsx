@@ -100,7 +100,7 @@ function Diorama() {
         {/* Middle-right ghost — Skills frontmatter */}
         <Ghost
           area="hidden lg:flex lg:col-start-10 lg:col-end-13 lg:row-start-3 lg:row-end-4"
-          title="skills/hyperframes"
+          title="director/compose"
           icon={BookOpen}
         >
           <SkillGhost />
@@ -220,18 +220,15 @@ function CompositionGhost() {
   return (
     <pre className="font-mono text-[9px] leading-relaxed text-stone-400/75">
 {`{
-  "id": "comp-7x4y2",
   "fps": 30,
-  "tracks": [
-    {
-      "id": "track-bg",
-      "clips": [
-        { "id": "clip-a8z",
-          "startMs": 0,
-          "durationMs": 3000 }
-      ]
-    },
-    { "id": "track-text", ... }
+  "width": 1920,
+  "clips": [
+    { "id": "clip-a8z",
+      "block": "KineticTitle",
+      "from": 0,
+      "durationInFrames": 90 },
+    { "id": "clip-b2k",
+      "block": "StatReveal", ... }
   ]
 }`}
     </pre>
@@ -263,14 +260,14 @@ function SkillGhost() {
   return (
     <pre className="font-mono text-[9px] leading-relaxed text-stone-400/75">
 {`---
-name: hyperframes
-description: HTML/CSS clips
-         + animation rules.
+name: compose
+description: turn a request
+         into Remotion clips.
 ---
-## When to use
-- compose a video clip
-- pick block templates
-- estimate timing`}
+## How to build
+- open with a title
+- develop with bullets/stat
+- close with a logo outro`}
     </pre>
   );
 }
@@ -279,7 +276,7 @@ function ConstructsGhost() {
   const constructs = [
     { label: "State", note: "Zod", icon: Cpu },
     { label: "Modes", note: "Director", icon: Workflow },
-    { label: "Tools", note: "5 typed", icon: Wrench },
+    { label: "Tools", note: "2 typed", icon: Wrench },
     { label: "Skills", note: "1 loaded", icon: BookOpen },
     { label: "Memory", note: "LibSQL", icon: Database },
   ];
@@ -365,16 +362,16 @@ function FocalChat() {
         {/* Tool call 1 */}
         <ToolCallRow
           name="add-clip"
-          subtitle="track-bg · 0&ndash;3s"
-          html='<h1 class="text-6xl ...">Launch.</h1>'
+          subtitle="KineticTitle · 0&ndash;3s"
+          html='{ words: ["Launch."], from: 0 }'
           delayMs={420}
         />
 
         {/* Tool call 2 */}
         <ToolCallRow
           name="add-clip"
-          subtitle="track-outro · 27&ndash;30s"
-          html='<a href="/start" class="...">Start now &rarr;</a>'
+          subtitle="LogoOutro · 9&ndash;12s"
+          html='{ title: "Bolt", tagline: "Start now →" }'
           delayMs={680}
         />
 
@@ -384,19 +381,17 @@ function FocalChat() {
             VF
           </span>
           <p className="text-[12px] leading-relaxed text-stone-700">
-            Done — added a hero title from{" "}
-            <span className="font-mono text-stone-900">0–3s</span> on{" "}
-            <span className="font-mono text-stone-900">track-bg</span> and an
-            outro CTA from{" "}
-            <span className="font-mono text-stone-900">27–30s</span> on a new{" "}
-            <span className="font-mono text-stone-900">track-outro</span>.
-            Preview is live on the right.
+            Done — a kinetic title from{" "}
+            <span className="font-mono text-stone-900">0–3s</span> and a{" "}
+            logo outro from{" "}
+            <span className="font-mono text-stone-900">9–12s</span>. Preview
+            is live on the right.
           </p>
         </div>
 
         <div className="flex items-center gap-1.5 pl-7 text-[10px] font-mono text-stone-400">
           <span className="size-1 animate-pulse rounded-full bg-orange-500" />
-          <span>composition.delta · clipCount: 2 · trackCount: 2</span>
+          <span>tool_end · clipCount: 2</span>
         </div>
       </div>
 

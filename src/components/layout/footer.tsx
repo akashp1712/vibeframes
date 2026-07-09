@@ -1,6 +1,6 @@
 const links = [
   { label: "Mastra", href: "https://mastra.ai" },
-  { label: "HyperFrames", href: "https://www.hyperframes.dev" },
+  { label: "Remotion", href: "https://www.remotion.dev" },
   { label: "GitHub", href: "https://github.com/akashp1712/vibeframes" },
 ];
 

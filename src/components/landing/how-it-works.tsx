@@ -47,7 +47,7 @@ export function HowItWorks() {
           <StepCard
             step="02"
             title="Compose"
-            description="Typed tools mutate the HyperFrames composition tree."
+            description="Typed tools append clips to the Remotion composition."
             Icon={Wand2}
             accent="lavender"
             beamDelay={3}

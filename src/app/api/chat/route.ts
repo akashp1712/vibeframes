@@ -1,5 +1,7 @@
-import { getVibeFramesHarness } from "@/harness";
+import { getSession } from "@/harness";
 import { createSSEStream } from "@/protocol/sse-writer";
+import { isValidProjectId } from "@/lib/project-id";
+import { RequestContext } from "@mastra/core/di";
 import { randomUUID } from "crypto";
 
 export const maxDuration = 60;
@@ -39,13 +41,18 @@ const FILTERED_EVENT_TYPES = new Set([
 
 export async function POST(req: Request) {
   const { messages, data } = await req.json();
-  const projectId = (data?.projectId as string) || "default";
+  const projectId = data?.projectId as string;
+
+  // Same tight id rule as /api/render and the studio route — keeps the
+  // chat, store, and render layers in agreement on what a project is.
+  if (typeof projectId !== "string" || !isValidProjectId(projectId)) {
+    return Response.json({ error: "Invalid projectId" }, { status: 400 });
+  }
 
   const lastMessage = messages[messages.length - 1];
   const content = lastMessage?.content || "Hello";
 
-  const harness = await getVibeFramesHarness(projectId);
-  await harness.selectOrCreateThread();
+  const session = await getSession(projectId);
 
   const { stream, writeEvent, writeHeartbeat, endStream } = createSSEStream();
   const runId = randomUUID();
@@ -65,7 +72,7 @@ export async function POST(req: Request) {
 
   const hb = setInterval(writeHeartbeat, 5000);
 
-  const unsubscribe = harness.subscribe((event: Record<string, unknown>) => {
+  const unsubscribe = session.subscribe((event: Record<string, unknown>) => {
     const type = event.type as string;
     if (FILTERED_EVENT_TYPES.has(type)) return;
     emit(type, event);
@@ -74,7 +81,12 @@ export async function POST(req: Request) {
   (async () => {
     try {
       emit("run.start", { status: "started", content });
-      await harness.sendMessage({ content });
+      // Inject the projectId server-side so tools always write to the right
+      // project — the agent never has to (and can't reliably) supply it.
+      await session.sendMessage({
+        content,
+        requestContext: new RequestContext([["projectId", projectId]]),
+      });
       emit("run.complete", { status: "completed" });
     } catch (err) {
       emit("run.error", { status: "error", message: String(err) });

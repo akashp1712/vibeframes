@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { isValidProjectId } from "@/lib/project-id";
-import { HARNESS_CONFIG } from "@/harness/config";
 import { StudioClient } from "./studio-client";
 
 /**
@@ -17,5 +16,5 @@ export default async function StudioProjectPage({
 }) {
   const { projectId } = await params;
   if (!isValidProjectId(projectId)) notFound();
-  return <StudioClient projectId={projectId} model={HARNESS_CONFIG.defaultModel} />;
+  return <StudioClient projectId={projectId} />;
 }

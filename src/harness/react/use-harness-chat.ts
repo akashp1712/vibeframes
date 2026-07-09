@@ -26,10 +26,6 @@ export function useHarnessChat(projectId: string) {
   const [activeToolName, setActiveToolName] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-  }, []);
-
   const updateAssistant = useCallback(
     (id: string, mut: (m: ChatMessage) => ChatMessage) => {
       setMessages((prev) => prev.map((m) => (m.id === id ? mut(m) : m)));
@@ -37,9 +33,8 @@ export function useHarnessChat(projectId: string) {
     []
   );
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+  const submit = useCallback(
+    async () => {
       if (!input.trim() || isLoading) return;
 
       const userMsg: ChatMessage = {
@@ -228,8 +223,7 @@ export function useHarnessChat(projectId: string) {
     messages,
     input,
     setInput,
-    handleInputChange,
-    handleSubmit,
+    submit,
     isLoading,
     status,
     activeToolName,

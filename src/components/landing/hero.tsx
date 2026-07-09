@@ -1,23 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import Script from "next/script";
+import { Player } from "@remotion/player";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
+import { VibeVideo } from "@/remotion/VibeVideo";
+import { SAMPLE_COMPOSITION, SAMPLE_FRAMES } from "@/remotion/sample";
 
 
 export function Hero() {
-  const mounted = true;
-
   return (
     <section className="flex flex-1 flex-col items-center justify-center px-4 w-full">
-      <Script
-        src="https://cdn.jsdelivr.net/npm/@hyperframes/player"
-        strategy="afterInteractive"
-        type="module"
-      />
 
       <div className="flex max-w-2xl flex-col items-center gap-4 pt-12 pb-6 text-center">
         <div className="flex items-center gap-2 rounded-full border border-orange-200/70 bg-orange-50/60 px-3.5 py-1 shadow-3xs">
@@ -38,14 +33,14 @@ export function Hero() {
         <p className="max-w-lg text-sm sm:text-base leading-relaxed text-slate-600 font-sans">
           You describe what you want. The agent reasons, calls tools, and builds a{" "}
           <a
-            href="https://github.com/heygen-com/hyperframes"
+            href="https://www.remotion.dev"
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold text-stone-900 hover:text-stone-700 underline decoration-orange-300 hover:decoration-orange-500 decoration-2 underline-offset-2 transition-all"
           >
-            HyperFrames
+            Remotion
           </a>{" "}
-          composition — clip by clip, track by track — while you watch in real time.
+          composition — scene by scene — while you watch in real time.
         </p>
 
         <div className="flex items-center gap-3 pt-1">
@@ -87,34 +82,29 @@ export function Hero() {
             {/* File Path Title */}
             <div className="flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-3 py-1 font-mono text-[10px] text-stone-500 shadow-3xs">
               <span className="text-stone-300">~/vibeframes/</span>
-              <span className="font-semibold text-stone-700">composition.html</span>
+              <span className="font-semibold text-stone-700">composition.tsx</span>
             </div>
             {/* Engine Badge */}
             <div className="flex items-center gap-1 text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
               <span className="size-1.5 rounded-full bg-emerald-700 animate-pulse" />
-              HTML Player
+              Remotion
             </div>
           </div>
 
-          {/* Video Container */}
-          <div className="relative aspect-[16/9] w-full bg-white group cursor-pointer overflow-hidden">
-            {mounted ? (
-              <hyperframes-player
-                src="/intro/composition.html"
-                controls
-                autoplay
-                muted
-                loop
-                className="block h-full w-full"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-stone-400 font-sans text-sm">
-                Loading VibeFrames Player...
-              </div>
-            )}
-            
-            {/* Fine Hover Control Overlay */}
-            <div className="pointer-events-none absolute inset-0 bg-stone-900/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10" />
+          {/* Video Container — live Remotion preview of a sample composition */}
+          <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#09090b]">
+            <Player
+              component={VibeVideo}
+              inputProps={{ composition: SAMPLE_COMPOSITION }}
+              durationInFrames={SAMPLE_FRAMES}
+              fps={SAMPLE_COMPOSITION.fps}
+              compositionWidth={SAMPLE_COMPOSITION.width}
+              compositionHeight={SAMPLE_COMPOSITION.height}
+              style={{ width: "100%", height: "100%" }}
+              autoPlay
+              loop
+              controls
+            />
           </div>
         </div>
       </div>

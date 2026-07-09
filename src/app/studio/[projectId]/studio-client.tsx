@@ -1,69 +1,89 @@
 "use client";
 
-import { useHarnessChat } from "@/harness/react/use-harness-chat";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { StudioTopbar } from "@/components/studio/shell/topbar";
-import { StudioStatusbar } from "@/components/studio/shell/statusbar";
-import { ChatPanel } from "@/components/studio/chat/panel";
-import { PreviewPanel } from "@/components/studio/preview/panel";
-import { CodePanel } from "@/components/studio/code/panel";
-import { useComposition } from "@/harness/react/use-composition";
+import { useHarnessChat } from "@/harness/react/use-harness-chat";
+import { useComposition, totalFrames } from "@/harness/react/use-composition";
+import { useExport } from "@/harness/react/use-export";
+import { Topbar } from "@/components/studio/Topbar";
+import { Stage } from "@/components/studio/Stage";
+import { Timeline } from "@/components/studio/Timeline";
+import { Feed } from "@/components/studio/Feed";
+import { Composer } from "@/components/studio/Composer";
+import { PalettePicker } from "@/components/studio/PalettePicker";
+import { DEFAULT_PALETTE, type Palette } from "@/remotion/palettes";
 
 /**
- * Client-side Studio shell. Receives `projectId` as a plain prop from the
- * server page (`/studio/[projectId]/page.tsx`) so we never have to deal with
- * `useParams()` returning `null` during hydration on Next 16.
+ * The Director's Console. A dark, cinematic two-pane workspace:
+ * a framed stage + timeline on the left, the live agent rail + composer
+ * on the right. Everything is driven by the SSE stream.
  */
-export function StudioClient({ projectId, model }: { projectId: string; model: string }) {
-  const {
-    messages,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    status,
-    activeToolName,
-    error,
-  } = useHarnessChat(projectId);
-
+export function StudioClient({ projectId }: { projectId: string }) {
+  const { messages, input, setInput, submit, isLoading, status, error } =
+    useHarnessChat(projectId);
   const composition = useComposition(messages);
+  const [palette, setPalette] = useState<Palette>(DEFAULT_PALETTE);
+  const { run: runExport, exporting } = useExport(projectId);
+  const busy = isLoading;
 
   useEffect(() => {
     if (error) toast.error(error.message || "Something went wrong");
   }, [error]);
 
+  const handleExport = async () => {
+    try {
+      const url = await toast.promise(runExport(palette.id), {
+        loading: "Rendering your video…",
+        success: "Video ready — downloading.",
+        error: (e) => (e instanceof Error ? e.message : "Render failed"),
+      }).unwrap();
+      if (url) window.open(url, "_blank");
+    } catch {
+      /* toast already surfaced it */
+    }
+  };
+
   return (
-    <div className="flex h-dvh flex-col">
-      <StudioTopbar clipCount={composition.clipCount} trackCount={composition.trackCount} />
-      <div className="flex flex-1 overflow-hidden">
-        <ChatPanel
-          messages={messages}
-          input={input}
-          isLoading={isLoading}
+    <>
+      <div className="studio-atmosphere" />
+      <div className="studio-grain" />
+
+      <div className="studio-shell">
+        <Topbar
           status={status}
-          activeToolName={activeToolName}
-          onInputChange={handleInputChange}
-          onSubmit={handleSubmit}
-          onSelectPrompt={setInput}
+          canExport={composition.clips.length > 0 && !busy}
+          exporting={exporting}
+          onExport={handleExport}
         />
-        <PreviewPanel
-          html={composition.html}
-          clips={composition.clips}
-          totalDuration={composition.totalDuration}
-          isLoading={isLoading}
-        />
-        <CodePanel html={composition.html} />
+
+        <aside className="studio-rail">
+          <div className="studio-rail-head">Director</div>
+          <Feed messages={messages} status={status} />
+          {composition.clips.length > 0 && (
+            <div className="studio-palette-bar">
+              <span className="studio-palette-label">Palette</span>
+              <PalettePicker value={palette} onChange={setPalette} />
+            </div>
+          )}
+          <Composer
+            value={input}
+            onChange={setInput}
+            onSubmit={submit}
+            busy={busy}
+            showSuggestions={messages.length === 0}
+          />
+        </aside>
+
+        <main className="studio-stage">
+          <Stage
+            composition={composition}
+            frames={totalFrames(composition)}
+            busy={busy}
+            palette={palette}
+          />
+          <Timeline composition={composition} />
+        </main>
       </div>
-      <StudioStatusbar
-        projectId={projectId}
-        model={model}
-        status={status}
-        activeToolName={activeToolName}
-        clipCount={composition.clipCount}
-        trackCount={composition.trackCount}
-      />
-    </div>
+    </>
   );
 }

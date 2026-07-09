@@ -1,54 +1,46 @@
 /**
- * VibeFrames harness factory.
+ * VibeFrames controller factory.
  *
- * Architecture: ONE Director agent walks brief → storyboard → compose
- * → validate inside one user turn. See docs/architecture.md for the
- * end-to-end map.
+ * ONE Director agent turns a prompt into a composition (a list of clips) by
+ * calling add-clip. Built on Mastra's AgentController (1.50) — the controller
+ * is the shared host; each project drives work through its own Session.
  *
- * Public surface (exported below):
- *   getVibeFramesHarness(projectId)  cached singleton per project
- *   createVibeFramesHarness(projectId)  fresh instance (tests)
- *   composition primitives: Composition, Clip, Track, get/setComposition,
- *                           addClip/updateClip/removeClip, serialize
- *
- * Almost all callers want `getVibeFramesHarness` — the cached instance
- * holds in-process LibSQL connections and Mastra Memory state. Building
- * a fresh harness per request would thrash both.
+ * Cached singleton per project so LibSQL connections + memory aren't thrashed.
  */
-import { Harness } from "@mastra/core/harness";
+import { AgentController, type Session } from "@mastra/core/agent-controller";
+import { Workspace, LocalFilesystem } from "@mastra/core/workspace";
 import { Memory } from "@mastra/memory";
-import { VibeFramesStateSchema, createInitialState, type VibeFramesState } from "./state";
+import { join } from "path";
+import { VibeFramesStateSchema, type VibeFramesState } from "./state";
 import { createDirectorMode } from "./director/agent";
-import { createHarnessServices, type HarnessServices } from "./services";
 import { createHarnessStorage } from "./storage";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const SKILLS_PATH = join(__dirname, "director", "skills");
+// The Director's skills live next to its agent. The workspace filesystem is
+// rooted here so the `compose` skill (director/skills/compose/SKILL.md) is
+// discoverable via the auto-generated skill tools — keeping the system prompt
+// lean per agentskills.io.
+const DIRECTOR_DIR = join(process.cwd(), "src", "harness", "director");
 
-export const services: HarnessServices = createHarnessServices();
-const instances = new Map<string, Harness<VibeFramesState>>();
+const controllers = new Map<string, AgentController<VibeFramesState>>();
+const sessions = new Map<string, Session<VibeFramesState>>();
 
-export function createVibeFramesHarness(projectId: string) {
-  // Single LibSQL store backs Mastra threads/messages. File-backed by
-  // default (`file:./.data/vibeframes.db`); set VIBEFRAMES_DB_URL to
-  // a `libsql://` URL + auth token for Turso in serverless. See
-  // storage.ts.
+function createController(projectId: string) {
   const storage = createHarnessStorage();
-  const memory = new Memory({ storage });
-
-  return new Harness<VibeFramesState>({
+  return new AgentController<VibeFramesState>({
     id: "vibeframes",
     resourceId: projectId,
     stateSchema: VibeFramesStateSchema,
+    initialState: { projectId, yolo: true },
     storage,
-    memory,
-    modes: [createDirectorMode(services)],
-    workspace: { skills: [SKILLS_PATH] },
-    // Strip Mastra's built-in tools we don't use. ask_user / submit_plan
-    // imply human-in-the-loop (we run YOLO). subagent / task_* are not
-    // part of our pipeline.
+    memory: new Memory({ storage }),
+    // Workspace rooted at the director dir so the `compose` skill is loadable
+    // via the built-in skill tools (keeps the system prompt minimal).
+    workspace: new Workspace({
+      filesystem: new LocalFilesystem({ basePath: DIRECTOR_DIR }),
+      skills: ["skills"],
+    }),
+    modes: [createDirectorMode()],
+    defaultModeId: "director",
     disableBuiltinTools: [
       "task_write",
       "task_check",
@@ -61,33 +53,26 @@ export function createVibeFramesHarness(projectId: string) {
   });
 }
 
-export async function getVibeFramesHarness(projectId: string) {
-  let harness = instances.get(projectId);
-  if (!harness) {
-    harness = createVibeFramesHarness(projectId);
-    await harness.init();
-    // yolo: true → tools execute without human approval. Vercel's
-    // serverless runtime can't host stateful approval flows; YOLO is
-    // also the right UX for a single-turn pipeline.
-    await harness.setState(createInitialState(projectId, true));
-    instances.set(projectId, harness);
+/** Get (or lazily create) the live Session for a project. */
+export async function getSession(projectId: string): Promise<Session<VibeFramesState>> {
+  const existing = sessions.get(projectId);
+  if (existing) return existing;
+
+  let controller = controllers.get(projectId);
+  if (!controller) {
+    controller = createController(projectId);
+    await controller.init();
+    controllers.set(projectId, controller);
   }
-  return harness;
+
+  const session = await controller.createSession({ resourceId: projectId });
+  sessions.set(projectId, session);
+  return session;
 }
 
-// Re-exports — flat surface for callers outside `harness/` so they
-// don't reach into deep paths.
-export { HARNESS_CONFIG } from "./config";
-export type { Composition, Track, Clip } from "./composition/schema";
-export { CompositionSchema, TrackSchema, ClipSchema } from "./composition/schema";
+// Flat public surface.
+export type { Composition, Clip } from "./composition/schema";
+export { CompositionSchema, ClipSchema } from "./composition/schema";
 export { getComposition, setComposition } from "./composition/store";
-export {
-  createEmptyComposition,
-  addClip,
-  updateClip,
-  removeClip,
-  addTrack,
-  removeTrack,
-} from "./composition/mutations";
-export { serialize } from "./composition/serialize";
+export { createEmptyComposition, addClip, totalFrames } from "./composition/mutations";
 export type { VibeFramesState };
