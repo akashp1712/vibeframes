@@ -19,6 +19,9 @@ export const ClipSchema = z.object({
     "DeviceMockup",
     "AudioPulse",
     "LogoOutro",
+    "LowerThird",
+    "WipeReveal",
+    "ProgressTrack",
   ]),
   from: z.number().int().min(0), // start frame
   durationInFrames: z.number().int().min(1),
