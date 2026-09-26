@@ -191,7 +191,7 @@ Neither knows the other's internals.
 | :--- | :--- | :--- |
 | **Agent runtime** | [Mastra](https://mastra.ai) 1.50 `AgentController` + `Session` | Session-oriented host: one agent, typed state, streamed events. |
 | **Video engine** | [Remotion](https://remotion.dev) | React → deterministic video. Same components preview *and* render. |
-| **Model** | OpenAI `gpt-4o-mini` via [AI SDK](https://sdk.vercel.ai) | Fast, cheap, strong structured tool-calling. Override via `VIBEFRAMES_MODEL`. |
+| **Model** | OpenAI `gpt-4o` by default; Claude Opus 5.5 (`claude-opus-5-5`) optional via [AI SDK](https://sdk.vercel.ai) | Set `VIBEFRAMES_MODEL=claude-opus-5-5` and `ANTHROPIC_API_KEY` to opt in. |
 | **Framework** | Next.js 16 (App Router), React 19 | SSE routes, per-project `/studio/[projectId]`. |
 | **Storage** | LibSQL (file-backed) | Threads, messages, composition snapshots. |
 | **UI** | Tailwind v4 + MagicUI | Warm editorial light theme, subtle motion. |
@@ -209,6 +209,10 @@ pnpm dev                                        # http://localhost:3000
 - **`/`** — the marketing page (with a live Remotion sample in the hero).
 - **`/studio`** — mints a project and opens the console. Pick a template or
   describe a video, watch it build, then **Export MP4**.
+
+To run the Director with Claude Opus 5.5, set `VIBEFRAMES_MODEL=claude-opus-5-5`
+and `ANTHROPIC_API_KEY` in `.env.local`. OpenAI remains the default; do not
+change the model ID without configuring its matching provider key.
 
 Useful env: `VIBEFRAMES_MODEL` (agent model), `VIBEFRAMES_DATA_DIR` (composition
 store), `VIBEFRAMES_WORKSPACE` (scratch workspace dir).
