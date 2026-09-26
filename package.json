@@ -18,6 +18,7 @@
     "clear-data": "rm -rf .data"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.122",
     "@ai-sdk/openai": "^3.0.66",
     "@ai-sdk/react": "^3.0.195",
     "@base-ui/react": "^1.5.0",
