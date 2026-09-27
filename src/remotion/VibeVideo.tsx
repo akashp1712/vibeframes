@@ -15,6 +15,9 @@ import { SplitCompare } from "./blocks/SplitCompare";
 import { BigQuote } from "./blocks/BigQuote";
 import { DeviceMockup } from "./blocks/DeviceMockup";
 import { AudioPulse } from "./blocks/AudioPulse";
+import { LowerThird } from "./blocks/LowerThird";
+import { WipeReveal } from "./blocks/WipeReveal";
+import { ProgressTrack } from "./blocks/ProgressTrack";
 import { TitleCard } from "./blocks/TitleCard";
 import { Outro } from "./blocks/Outro";
 import { PaletteProvider } from "./palette-context";
@@ -34,6 +37,9 @@ const BLOCKS: Record<string, React.ComponentType<any>> = {
   BigQuote,
   DeviceMockup,
   AudioPulse,
+  LowerThird,
+  WipeReveal,
+  ProgressTrack,
   // legacy aliases
   TitleCard,
   Outro,

@@ -24,6 +24,9 @@ the playbook for *what* makes a good one.
   `url` + `screenTitle` + `screenSub`. For app / product / launch videos.
 - **AudioPulse** — a `title` over an equalizer that pulses to a music bed. Use at
   most ONCE per video, as an energetic opener or closer.
+- **LowerThird** — compact identity/chapter card. `title` + optional `label`.
+- **WipeReveal** — accent panel reveals a punchy `heading`; optional `label`.
+- **ProgressTrack** — animated milestone track. `heading` + `value` (0–100) + optional `label`.
 - **LogoOutro** — closing brand. `title` + `tagline`.
 
 ## How to choose scenes (think, don't copy)
@@ -38,6 +41,9 @@ about, and pick the blocks that fit *that*. Match intent to block:
 - code, an API, an SDK, anything technical → **CodeReveal**
 - a testimonial, a bold claim, a mic-drop line → **BigQuote**
 - an app / product / website → **DeviceMockup**
+- a person, chapter, or feature label → **LowerThird**
+- a dramatic announcement or twist → **WipeReveal**
+- a process completion or progress milestone → **ProgressTrack**
 - an energetic hype opener → **AudioPulse** (at most once)
 - a list of points / features / reasons → **BulletReveal**
 

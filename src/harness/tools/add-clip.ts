@@ -18,7 +18,7 @@ export function createAddClipTool() {
       "play back-to-back.",
     inputSchema: z.object({
       block: z
-        .enum(["KineticTitle", "BulletReveal", "StatReveal", "BarChart", "CodeReveal", "FlowDiagram", "SplitCompare", "BigQuote", "DeviceMockup", "AudioPulse", "LogoOutro"])
+        .enum(["KineticTitle", "BulletReveal", "StatReveal", "BarChart", "CodeReveal", "FlowDiagram", "SplitCompare", "BigQuote", "DeviceMockup", "AudioPulse", "LogoOutro", "LowerThird", "WipeReveal", "ProgressTrack"])
         .describe(
           "Scene type. KineticTitle = bold opener; words fly in one by one. " +
             "BulletReveal = a heading + 2–4 bullets as numbered cards. " +
@@ -30,7 +30,10 @@ export function createAddClipTool() {
             "BigQuote = a large pull-quote with an author (testimonials / punchy closer). " +
             "DeviceMockup = a browser window floating up showing a product screen (for app/product videos). " +
             "AudioPulse = a title over an equalizer that pulses to a music bed — use ONCE, as an energetic opener or closer. " +
-            "LogoOutro = closing brand/CTA with a shine sweep.",
+            "LogoOutro = closing brand/CTA with a shine sweep. " +
+            "LowerThird = compact identity or chapter caption. " +
+            "WipeReveal = sliding accent panel reveals a punchy headline. " +
+            "ProgressTrack = timeline-style progress bar for a milestone.",
         ),
       from: z.number().int().min(0).describe("Start frame. First clip is 0."),
       durationInFrames: z
@@ -45,14 +48,14 @@ export function createAddClipTool() {
             .array(z.string())
             .optional()
             .describe("KineticTitle: 2–4 words that animate in one at a time, e.g. ['Ship','faster']."),
-          heading: z.string().optional().describe("BulletReveal: heading above the bullets."),
+          heading: z.string().optional().describe("BulletReveal/WipeReveal/ProgressTrack: headline."),
           bullets: z
             .array(z.string())
             .optional()
             .describe("BulletReveal: 2–4 short bullet strings (≤5 words each)."),
-          value: z.number().optional().describe("StatReveal: the number to count up to, e.g. 99."),
+          value: z.number().optional().describe("StatReveal: number to count up to; ProgressTrack: target percent (0–100)."),
           suffix: z.string().optional().describe("StatReveal: unit after the number, e.g. '%', 'x', 'ms'."),
-          label: z.string().optional().describe("StatReveal/BarChart/BulletReveal: heading or caption."),
+          label: z.string().optional().describe("StatReveal/BarChart/BulletReveal/LowerThird/WipeReveal/ProgressTrack: caption."),
           bars: z
             .array(z.object({ label: z.string(), value: z.number() }))
             .optional()
@@ -75,7 +78,7 @@ export function createAddClipTool() {
           url: z.string().optional().describe("DeviceMockup: the browser URL bar text, e.g. 'nova.dev'."),
           screenTitle: z.string().optional().describe("DeviceMockup: big headline shown on the product screen."),
           screenSub: z.string().optional().describe("DeviceMockup: subtitle under the screen headline."),
-          title: z.string().optional().describe("LogoOutro: the brand or product name."),
+          title: z.string().optional().describe("LogoOutro/LowerThird: brand or card title."),
           tagline: z.string().optional().describe("LogoOutro: short line under the title / CTA."),
         })
         .describe("Props for the chosen block. Only fill the ones that block uses."),

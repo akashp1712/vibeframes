@@ -5,8 +5,16 @@
 import { Agent } from "@mastra/core/agent";
 import type { AgentControllerMode } from "@mastra/core/agent-controller";
 import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { HARNESS_CONFIG } from "../config";
 import { DIRECTOR_PROMPT } from "./prompt";
 import { createDirectorTools } from "./tools";
+
+/** Select the AI SDK provider from the model ID, without a second env flag. */
+export function directorModel(modelId = HARNESS_CONFIG.defaultModel) {
+  if (modelId.startsWith("claude-")) return anthropic(modelId);
+  return openai(modelId);
+}
 
 export function createDirectorMode(): AgentControllerMode {
   return {
@@ -18,7 +26,7 @@ export function createDirectorMode(): AgentControllerMode {
       name: "VibeFrames Director",
       instructions: DIRECTOR_PROMPT,
       tools: createDirectorTools(),
-      model: openai(process.env.VIBEFRAMES_MODEL || "gpt-4o-mini"),
+      model: directorModel(),
     }),
   };
 }
