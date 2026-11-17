@@ -4,9 +4,9 @@ describe("feature-film contract", () => {
   it("keeps scenes contiguous and ends exactly on the composition boundary", () => {
     const film = FilmSchema.parse(DEMO_FILM);
     const clips = timeline(film.story);
-    expect(filmDuration(film)).toBe(570);
+    expect(filmDuration(film)).toBe(630);
     clips.slice(1).forEach((c, i) => expect(c.from).toBe(clips[i].from + clips[i].duration));
-    expect(clips.at(-1)!.from + clips.at(-1)!.duration).toBe(570);
+    expect(clips.at(-1)!.from + clips.at(-1)!.duration).toBe(630);
   });
   it("rejects executable, remote, and oversized screenshot inputs", () => {
     for (const value of [

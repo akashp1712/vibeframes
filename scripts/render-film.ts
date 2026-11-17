@@ -20,12 +20,19 @@ async function main() {
     enableCaching: false,
   });
   const inputProps = { film };
-  const composition = await selectComposition({ serveUrl, id: "WorkflowFilm", inputProps });
+  const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE;
+  const composition = await selectComposition({
+    serveUrl,
+    id: "WorkflowFilm",
+    inputProps,
+    browserExecutable,
+  });
   await renderMedia({
     serveUrl,
     composition,
     inputProps,
     codec: "h264",
+    browserExecutable,
     outputLocation: output,
     concurrency: 2,
   });

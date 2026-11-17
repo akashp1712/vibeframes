@@ -2,7 +2,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowRight, ArrowUpRight, Check, FileJson, Play, ShieldCheck } from "lucide-react";
-import { DEMO_FILM } from "@/features/films/schema";
+import { DEMO_FILM, filmDuration } from "@/features/films/schema";
 const FilmPlayer = dynamic(() => import("./FilmPlayer").then((m) => m.FilmPlayer), { ssr: false });
 export function FilmHome() {
   return (
@@ -144,7 +144,9 @@ export function FilmHome() {
           </div>
           <div className="vf-showcase-meta">
             <span>FOLIO / INVOICE MATCHING</span>
-            <span>Illustrative source · 19 seconds · sound-off friendly</span>
+            <span>
+              Illustrative source · {filmDuration(DEMO_FILM) / 30} seconds · sound-off friendly
+            </span>
             <Link href="/create">
               Remix this film <ArrowUpRight size={15} />
             </Link>

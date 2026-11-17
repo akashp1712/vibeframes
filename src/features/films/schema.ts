@@ -134,7 +134,7 @@ export function makeStory(b: Brief): Story {
         eyebrow: `New in ${b.product}`,
         headline: b.feature,
         body: b.after,
-        duration: 120,
+        duration: 180,
       },
       {
         id: "focus",

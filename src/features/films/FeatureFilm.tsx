@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { loadFilmFont } from "./font";
 import { MotionMark } from "./MotionMark";
+import { DirectedScene } from "./DirectedScene";
 import { RunChanges } from "./RunChanges";
 import {
   AbsoluteFill,
@@ -558,7 +559,13 @@ export function FeatureFilm({ film }: { film: Film }) {
           durationInFrames={scene.duration}
           name={BLOCKS[scene.block].name}
         >
-          <SceneView film={film} scene={scene} index={index} />
+          {["statement", "trace", "evidence", "comparison", "stack", "endcard"].includes(
+            scene.block,
+          ) ? (
+            <DirectedScene film={film} scene={scene} index={index} />
+          ) : (
+            <SceneView film={film} scene={scene} index={index} />
+          )}
         </Sequence>
       ))}
     </AbsoluteFill>
