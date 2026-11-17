@@ -6,6 +6,8 @@ The new product lives in `/create`. `/studio` and its legacy harness are retaine
 
 - `src/features/films/trace.ts`: versioned normalized source, bounded events, unique IDs, status, references and basic sensitive-pattern removal. Parsing strips unknown raw payloads and validates again after redaction. This is not comprehensive PII detection.
 - `schema.ts`: validated brief, story, allowed block enum, local raster screenshots, formats and theme tokens. No generated code or remote media URL can enter the renderer.
+- `delivery.ts`: deterministic event comparison by stable ID and a reviewed delivery record. Source and film-configuration SHA-256 hashes identify the supplied content; they do not sign the rendered video or establish truth.
+- `font.ts`: a bundled, licensed Geist font is explicitly loaded before rendering. SVG symbols avoid dependence on missing system glyphs in clean Linux containers.
 - `director.ts`: optional Mastra agent using OpenAI structured output. Source events are data. Its output is a story, not executable React, and never replaces the source object.
 - `FeatureFilm.tsx` and `TraceBlocks.tsx`: pure, frame-driven Remotion components. Evidence-bearing blocks read source fields directly. Editorial blocks read reviewed author/model copy. The same composition powers browser preview and exports.
 - `FilmStudio.tsx`: import → review → compose/direct → edit → review → export. IndexedDB persists one draft on the device. JSON project download is the portable backup; there is no account, cloud project sync, or collaboration in this version.

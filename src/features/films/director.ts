@@ -4,10 +4,16 @@ import { StorySchema, BLOCKS, type Brief } from "./schema";
 import type { Trace } from "./trace";
 
 export const DIRECTOR_MODELS = { balanced: "gpt-6.1-sol", quality: "gpt-6-astra" } as const;
-export async function directFilm(brief: Brief, trace: Trace, quality: keyof typeof DIRECTOR_MODELS, signal?: AbortSignal) {
+export async function directFilm(
+  brief: Brief,
+  trace: Trace,
+  quality: keyof typeof DIRECTOR_MODELS,
+  signal?: AbortSignal,
+) {
   const modelId = process.env.VIBEFRAMES_FILM_MODEL || DIRECTOR_MODELS[quality];
   const agent = new Agent({
-    id: "workflow-film-director", name: "Workflow Film Director",
+    id: "workflow-film-director",
+    name: "Workflow Film Director",
     model: openai(modelId),
     instructions: `You direct concise motion films for AI automation agencies explaining one recorded workflow to a client.
 Return exactly six scenes and three distinct opening hooks. Use only these block names: ${Object.keys(BLOCKS).join(", ")}.
@@ -21,7 +27,9 @@ Use 120-180 frames for the trace/evidence scenes. Total film 20-30 seconds. This
 Do not write code, HTML, markdown, or external media URLs.`,
   });
   const result = await agent.generate(JSON.stringify({ brief, trace }), {
-    structuredOutput: { schema: StorySchema }, maxSteps: 1, abortSignal: signal,
+    structuredOutput: { schema: StorySchema },
+    maxSteps: 1,
+    abortSignal: signal,
   });
   return { story: StorySchema.parse(result.object), model: modelId, usage: result.usage };
 }

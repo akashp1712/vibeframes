@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open `/create`. Try the illustrative sample, or import/paste normalized JSON using the downloadable example. Edit the brief, compose six scenes, choose one of three formats and themes, review the source, and export. Drafts save locally; download the project JSON to keep a portable copy.
+Open `/create`. Try the illustrative sample, or import/paste normalized JSON using the downloadable example. Optionally import a previous run to create a source-bound change scene. Download a reviewed delivery record with source fingerprints and scene bindings. Edit the brief, compose six scenes, choose one of three formats and themes, review the source, and export. Drafts save locally; download the project JSON to keep a portable copy.
 
 Browser export uses MP4 where supported and WebM otherwise. For a reliable MP4 render:
 
@@ -23,6 +23,7 @@ pnpm render:film ./vibeframes-project.json ./out/client-film.mp4
 
 Optional OpenAI direction requires `OPENAI_API_KEY`; the studio works without it. AI calls send the reviewed brief and normalized events, not screenshots. See the architecture document before enabling AI on a hosted deployment.
 
+- [Moat thesis, staged build and paid-pilot plan](docs/product-plan.md)
 - [Product decision and competitive research](docs/product-research.md)
 - [Architecture, setup and limitations](docs/architecture.md)
 
