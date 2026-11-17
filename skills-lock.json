@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "skills": {
+    "mastra": {
+      "source": "mastra-ai/skills",
+      "sourceType": "github",
+      "computedHash": "d05375a6c989d2053456143288c78e50a3a4f653f42e5bec417e708ac002fe02",
+      "commit": "045740138738bee82d5c9bbebea2f4373b5ca2dc",
+      "skillPath": "skills/mastra/SKILL.md"
+    },
+    "remotion-best-practices": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "computedHash": "5540958b08abc0563cce5410712edf84736a944101e4848857869799cd0b1241",
+      "commit": "3e20ac75161bc34468845df714701cc9bf6075f4",
+      "skillPath": "skills/remotion-best-practices/SKILL.md"
+    },
+    "remotion-render": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "computedHash": "d5008cddb591bc18ae399ebd4fe23f6134a00ce1d7afc81ce7e0ba7ac02d0551",
+      "commit": "3e20ac75161bc34468845df714701cc9bf6075f4",
+      "skillPath": "skills/remotion-render/SKILL.md"
+    },
+    "remotion-upgrade": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "computedHash": "e469c92611c08ca705bd510965650e249a983d54703b1b5ca7cfb7165deb0f8f",
+      "commit": "3e20ac75161bc34468845df714701cc9bf6075f4",
+      "skillPath": "skills/remotion-upgrade/SKILL.md"
+    }
+  }
+}

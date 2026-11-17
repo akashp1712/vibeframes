@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VibeFrames",
-  description: "A Mastra Harness agent that composes videos through conversation.",
+  title: "VibeFrames — Make your automation visible",
+  description: "Turn a reviewed workflow run into a clear, editable motion film for your clients.",
 };
 
 export default function RootLayout({

@@ -25,7 +25,7 @@ export const ClipSchema = z.object({
   ]),
   from: z.number().int().min(0), // start frame
   durationInFrames: z.number().int().min(1),
-  props: z.record(z.any()).default({}),
+  props: z.record(z.string(), z.any()).default({}),
 });
 export type Clip = z.infer<typeof ClipSchema>;
 

@@ -7,7 +7,12 @@ import { SAMPLE_COMPOSITION, SAMPLE_FRAMES } from "./sample";
  * overridden per-render via `inputProps` + `calculateMetadata`, so the
  * exported mp4 always matches the agent's actual composition.
  */
+import { FeatureFilm } from "../features/films/FeatureFilm";
+import { DEMO_FILM, DIMENSIONS, filmDuration } from "../features/films/schema";
+
 export const RemotionRoot: React.FC = () => (
+  <>
+  <Composition id="WorkflowFilm" component={FeatureFilm} defaultProps={{ film: DEMO_FILM }} durationInFrames={570} fps={30} width={1920} height={1080} calculateMetadata={({ props }) => ({ ...DIMENSIONS[props.film.frame], durationInFrames: filmDuration(props.film) })} />
   <Composition
     id="VibeFrames"
     component={VibeVideo}
@@ -31,4 +36,5 @@ export const RemotionRoot: React.FC = () => (
       };
     }}
   />
+  </>
 );
