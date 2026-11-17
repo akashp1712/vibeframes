@@ -85,7 +85,7 @@
   --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --radius-default: var(--radius);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-instrument-serif);
   --font-heading: var(--font-sans);
